@@ -1,5 +1,7 @@
 # The Telemetrix Project
 
+# The Telemetrix Client For The ESP32 Is A Work In Progress
+
 Telemetry is a system for collecting data on a remote device and then automatically transmitting the 
 collected data back to local receiving equipment for processing.
 
