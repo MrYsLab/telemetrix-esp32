@@ -212,7 +212,7 @@ class TelemetrixEsp32(threading.Thread):
         self.valid_gpio_input_pins = [4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
                                       22, 23, 25, 26, 27, 32, 33]
 
-        self.valid_gpio_output_pins = [4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
+        self.valid_gpio_output_pins = [2, 4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
                                       22, 23, 25, 26, 27, 32, 33]
 
         self.valid_touch_pins = [4, 12, 13, 14, 15, 27, 32, 33]
