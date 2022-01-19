@@ -272,9 +272,13 @@ class TelemetrixAioEsp32:
                 await self.shutdown()
             raise RuntimeError('Could not retrieve server firmware version')
 
-        print(f'Telemetrix4ESP32 Firmware Version: {self.firmware_version[0]}'
-              f'.{self.firmware_version[1]}.{self.firmware_version[2]}')
+        if self.transport_is_ble:
+            print(f'Telemetrix4Esp32BLE Firmware Version: {self.firmware_version[0]}'
+                f'.{self.firmware_version[1]}.{self.firmware_version[2]}')
 
+        else:
+            print(f'Telemetrix4Esp32WIFI Firmware Version: {self.firmware_version[0]}'
+                  f'.{self.firmware_version[1]}.{self.firmware_version[2]}')
         command = [PrivateConstants.ENABLE_ALL_REPORTS]
 
         await self._send_command(command)
