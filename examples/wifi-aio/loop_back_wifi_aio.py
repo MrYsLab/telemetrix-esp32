@@ -21,7 +21,7 @@ from telemetrix_aio_esp32 import telemetrix_aio_esp32
 
 """
 Loopback some data to assure that data can be sent and received between
-the Telemetrix client and arduino-telemetrix server.
+the Telemetrix client and Telemetrix server.
 """
 
 
