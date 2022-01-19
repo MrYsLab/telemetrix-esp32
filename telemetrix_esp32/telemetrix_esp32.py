@@ -85,8 +85,7 @@ class TelemetrixEsp32(threading.Thread):
                 threading.Thread(target=self._wifi_report_dispatcher)
             self.the_data_receive_thread = threading.Thread(target=self._tcp_receiver)
             self.the_data_receive_thread.daemon = True
-
-        self.the_reporter_thread.daemon = True
+            self.the_reporter_thread.daemon = True
 
         # flag to allow the reporter and receive threads to run.
         self.run_event = threading.Event()
