@@ -86,6 +86,9 @@ class TelemetrixEsp32(threading.Thread):
             self.the_data_receive_thread = threading.Thread(target=self._tcp_receiver)
             self.the_data_receive_thread.daemon = True
             self.the_reporter_thread.daemon = True
+        else:
+            self.the_reader_thread = threading.Thread(target=self._ble_reader)
+            self.the_reader_thread.daemon = True
 
         # flag to allow the reporter and receive threads to run.
         self.run_event = threading.Event()
@@ -151,7 +154,7 @@ class TelemetrixEsp32(threading.Thread):
 
         self.report_dispatch = {}
 
-        self.the_task = None
+        # self.the_task = None
 
         self.firmware_version = None
 
@@ -273,6 +276,9 @@ class TelemetrixEsp32(threading.Thread):
             self.transport = BleTransport(receive_callback=self._ble_report_dispatcher,
                                           is_asyncio=False)
             self.transport.ble_connect()
+            # self.the_reader_thread.start()
+            # self._run_threads()
+
         else:
             import socket
             from collections import deque
@@ -290,7 +296,7 @@ class TelemetrixEsp32(threading.Thread):
         for i in range(3):
             self._get_firmware_version()
 
-        time.sleep(1)
+        time.sleep(.01)
 
         if not self.firmware_version:
             if self.shutdown_on_exception:
@@ -947,6 +953,9 @@ class TelemetrixEsp32(threading.Thread):
             if self.shutdown_on_exception:
                 self.shutdown()
             raise RuntimeError('set_pin_mode_sonar: Invalid GPIO pin number')
+        if self.transport_is_ble:
+            self.the_reader_thread.start()
+            # self._run_threads()
 
     def set_pin_mode_spi(self, chip_select_list=None):
         """
@@ -2160,19 +2169,23 @@ class TelemetrixEsp32(threading.Thread):
         """
         self.shutdown_flag = True
 
-        if not self.transport_is_ble:
-            self._stop_threads()
+        # if not self.transport_is_ble:
+        self._stop_threads()
 
         # stop all reporting - both analog and digital
         command = [PrivateConstants.STOP_ALL_REPORTS]
         self._send_command(command)
+
+        if self.transport_is_ble:
+            self.transport.ble_disconnect()
+
         if self.restart_on_shutdown:
             # self.ble_transport.disconnect()
             command = [PrivateConstants.RESET]
             self._send_command(command)
-            time.sleep(.1)
-        if self.the_task:
-            self.the_task.cancel()
+            time.sleep(1)
+        # if self.the_task:
+        #     self.the_task.cancel()
 
     def disable_all_reporting(self):
         """
@@ -2239,10 +2252,11 @@ class TelemetrixEsp32(threading.Thread):
 
         """
         self.the_sender = sender
-        report = data[1]
+        if data:
+            report = data[1]
 
-        # noinspection PyArgumentList
-        self.report_dispatch[report](data[2:])
+            # noinspection PyArgumentList
+            self.report_dispatch[report](data[2:])
 
     # noinspection PyArgumentList
     def _wifi_report_dispatcher(self):
@@ -2627,7 +2641,11 @@ class TelemetrixEsp32(threading.Thread):
         # print(command)
         send_message = bytes(command)
         if self.transport_is_ble:
-            self.transport.ble_write(send_message)
+            try:
+                self.transport.ble_write(send_message)
+            except (KeyboardInterrupt, RuntimeError):
+                if self.shutdown_on_exception:
+                    self.shutdown()
         else:
             self.sock.sendall(send_message)
 
@@ -2659,3 +2677,13 @@ class TelemetrixEsp32(threading.Thread):
                     pass
         else:
             return
+
+    def _ble_reader(self):
+        # while self._is_running() and not self.shutdown_flag:
+        while not self.shutdown_flag:
+            try:
+                self.transport.ble_read()
+                time.sleep(.1)
+            except RuntimeError:
+                if self.shutdown_on_exception:
+                    self.shutdown()

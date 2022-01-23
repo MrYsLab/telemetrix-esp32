@@ -85,6 +85,12 @@ class BleTransport:
         except KeyboardInterrupt:
             raise
 
+    def ble_disconnect(self):
+        try:
+            self.loop.run_until_complete(self.disconnect())
+        except KeyboardInterrupt:
+            raise
+
     # noinspection PyTypeChecker
     async def connect(self):
         """
@@ -107,18 +113,28 @@ class BleTransport:
         # now attempt to connect
         print(f'Connecting to {self.ble_mac_address}. Please wait....')
         self.client = BleakClient(self.ble_mac_address)
-        await self.client.connect()
+        try:
+            await self.client.connect()
+        except bleak.exc.BleakDBusError:
+            raise KeyboardInterrupt
         self.connected = True
         print('Connection successful')
 
         # associate the notification handler with incoming data
         await self.client.start_notify(self.UART_RX_UUID, self.notification_handler)
+        # self.loop.create_task(self.ble_read())
 
     async def disconnect(self):
         await self.client.disconnect()
 
     def ble_write(self, data):
         self.loop.run_until_complete(self.write(data))
+
+    def ble_read(self):
+        self.loop.run_until_complete(self.client.read_gatt_char(self.UART_RX_UUID))
+
+    async def my_read(self):
+        await self.client.read_gatt_char(self.UART_RX_UUID)
 
     async def write(self, data):
 
