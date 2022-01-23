@@ -95,7 +95,7 @@ class TelemetrixEsp32(threading.Thread):
 
         # save input parameters
 
-        self.transport_is_ble = transport_is_ble
+        # self.transport_is_ble = transport_is_ble
 
         self.ip_port = ip_port
 
@@ -2183,11 +2183,15 @@ class TelemetrixEsp32(threading.Thread):
         # if self.transport_is_ble:
         #     self.transport.ble_disconnect()
 
+
+
         if self.restart_on_shutdown:
             # self.ble_transport.disconnect()
             command = [PrivateConstants.RESET]
             self._send_command(command)
-            time.sleep(1)
+            if not self.transport_is_ble:
+                self.sock.close()
+            # time.sleep(1)
         # if self.the_task:
         #     self.the_task.cancel()
 
