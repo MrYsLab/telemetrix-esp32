@@ -275,7 +275,11 @@ class TelemetrixEsp32(threading.Thread):
             from telemetrix_esp32_common.ble_transport import BleTransport
             self.transport = BleTransport(receive_callback=self._ble_report_dispatcher,
                                           is_asyncio=False)
-            self.transport.ble_connect()
+            try:
+                self.transport.ble_connect()
+            except KeyboardInterrupt:
+                if self.shutdown_on_exception:
+                    self.shutdown()
             # self.the_reader_thread.start()
             # self._run_threads()
 
@@ -2176,8 +2180,8 @@ class TelemetrixEsp32(threading.Thread):
         command = [PrivateConstants.STOP_ALL_REPORTS]
         self._send_command(command)
 
-        if self.transport_is_ble:
-            self.transport.ble_disconnect()
+        # if self.transport_is_ble:
+        #     self.transport.ble_disconnect()
 
         if self.restart_on_shutdown:
             # self.ble_transport.disconnect()
@@ -2684,6 +2688,7 @@ class TelemetrixEsp32(threading.Thread):
             try:
                 self.transport.ble_read()
                 time.sleep(.1)
-            except RuntimeError:
+            except:
                 if self.shutdown_on_exception:
                     self.shutdown()
+                # raise

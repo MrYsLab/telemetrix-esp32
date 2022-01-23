@@ -79,6 +79,7 @@ try:
     loop.run_until_complete(board.shutdown())
 except KeyboardInterrupt:
     loop.run_until_complete(board.shutdown())
+    time.sleep(1)
     sys.exit(0)
 
 

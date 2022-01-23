@@ -75,6 +75,7 @@ try:
             time.sleep(.1)
         except KeyboardInterrupt:
             board.shutdown()
+            time.sleep(1)
             sys.exit(0)
         # board.transport.ble_read()
 

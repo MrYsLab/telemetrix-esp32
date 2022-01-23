@@ -82,8 +82,8 @@ class BleTransport:
     def ble_connect(self):
         try:
             self.loop.run_until_complete(self.connect())
-        except KeyboardInterrupt:
-            raise
+        except (KeyboardInterrupt, NameError):
+            raise KeyboardInterrupt
 
     def ble_disconnect(self):
         try:
@@ -125,16 +125,25 @@ class BleTransport:
         # self.loop.create_task(self.ble_read())
 
     async def disconnect(self):
-        await self.client.disconnect()
+        try:
+            await self.client.disconnect()
+        except AttributeError:
+            pass
 
     def ble_write(self, data):
+        # try:
         self.loop.run_until_complete(self.write(data))
+        # except:
+            # self.loop.run_until_complete(self.disocnnect)
+            # pass
+            # raise RuntimeError('ble write error')
+            # return
 
     def ble_read(self):
-        self.loop.run_until_complete(self.client.read_gatt_char(self.UART_RX_UUID))
-
-    async def my_read(self):
-        await self.client.read_gatt_char(self.UART_RX_UUID)
+        try:
+            self.loop.run_until_complete(self.client.read_gatt_char(self.UART_RX_UUID))
+        except:
+            pass
 
     async def write(self, data):
 
