@@ -15,6 +15,7 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
+import asyncio
 import sys
 from telemetrix_esp32 import telemetrix_esp32
 
