@@ -1,5 +1,5 @@
 """
- Copyright (c) 2020 Alan Yorinks All rights reserved.
+ Copyright (c) 2022 Alan Yorinks All rights reserved.
 
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU AFFERO GENERAL PUBLIC LICENSE
@@ -46,9 +46,8 @@ async def loop_back(my_board, loop_back_data):
         for data in loop_back_data:
             await my_board.loop_back(data, callback=the_callback)
             print(f'Sending: {data}')
-            await asyncio.sleep(.1)
-        # await my_board.shutdown()
-        # sys.exit(0)
+        # leave time for callbacks to arrive
+        await asyncio.sleep(.3)
     except KeyboardInterrupt:
         await my_board.shutdown()
         sys.exit(0)
@@ -57,15 +56,13 @@ async def loop_back(my_board, loop_back_data):
 loop = asyncio.get_event_loop()
 
 # instantiate pymata_express
-board = telemetrix_aio_esp32.TelemetrixAioEsp32(
-    transport_is_ble=False, transport_address='192.168.2.232')
+board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_address='192.168.2.232')
 char_list = ['A', 'B', 'Z']
 try:
     # start the main function
     loop.run_until_complete(loop_back(board, char_list))
     loop.run_until_complete(board.shutdown())
     sys.exit(0)
-
 except KeyboardInterrupt:
     loop.run_until_complete(board.shutdown())
     sys.exit(0)

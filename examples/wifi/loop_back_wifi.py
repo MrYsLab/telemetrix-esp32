@@ -45,15 +45,16 @@ def loop_back(my_board, loop_back_data):
     try:
         for data in loop_back_data:
             my_board.loop_back(data, callback=the_callback)
-            time.sleep(.3)
             print(f'Sending: {data}')
+        # allow time for callbacks to fire
+        time.sleep(.3)
     except KeyboardInterrupt:
         my_board.shutdown()
         sys.exit(0)
 
 
 # instantiate pymata_express
-board = telemetrix_esp32.TelemetrixEsp32(ip_address='192.168.2.232')
+board = telemetrix_esp32.TelemetrixEsp32(transport_address='192.168.2.232')
 
 char_list = ['A', 'B', 'Z']
 
@@ -61,7 +62,6 @@ try:
     # start the main function
     loop_back(board, char_list)
     board.shutdown()
-
 except KeyboardInterrupt:
     board.shutdown()
     sys.exit(0)
