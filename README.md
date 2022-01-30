@@ -1,7 +1,7 @@
-# The Telemetrix Project
+# Telemetrix For The ESP32
 
 The Telemetrix Project is a modern-day replacement for 
-Arduino StandardFirmata, equipped with many more built-in features than 
+StandardFirmata and comes equipped with many more built-in features than 
 StandardFirmata. 
 
 Here is a feature comparison between Telemetrix and StandardFirmata:
@@ -21,12 +21,22 @@ Here is a feature comparison between Telemetrix and StandardFirmata:
 |     Stepper Motor Control (AccelStepper) |       X     |                 |
 |    Python Threaded Client Included  |       X     |      
 |    Python Asyncio Client Included  |       X     |
-|    Support For STM32 Boards (Black Pill)|       X     |    
 |    Designed To Be User Extensible |       X     |                 |
 |    Integrated Debugging Aids Provided |       X     |                 |
 |    Examples For All Features |       X     |                 |
 
+With WI-FI, you have a choice of two different APIs. The telemetrix_esp32 API uses 
+Python threading, while telemetrix_aio_esp32 uses Python asyncio.
 
+The BLE API only supports an asyncio version. This is due to the limitations of the 
+available Python BLE libraries.
+
+Here are links to the various client APIs:
+
+[WI-FI Threaded](https://htmlpreview.github.io/?https://github.com/MrYsLab/telemetrix-aio/blob/master/html/telemetrix_aio/index.html)
+[WI-FI Asyncio](https://htmlpreview.github.io/?https://github.com/MrYsLab/telemetrix-aio/blob/master/html/telemetrix_aio/index.html)
+
+[BLE Asyncio](https://htmlpreview.github.io/?https://github.com/MrYsLab/telemetrix-aio/blob/master/html/telemetrix_aio/index.html)
 
 The project consists of a 
 [Python client API](https://htmlpreview.github.io/?https://github.com/MrYsLab/telemetrix-aio/blob/master/html/telemetrix_aio/index.html)

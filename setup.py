@@ -6,7 +6,7 @@ with open('README.md') as f:
     long_description = f.read()
 
 setup(
-    name='telemetrix-aio-esp32BLE',
+    name='telemetrix-esp32',
     packages=['telemetrix_aio_esp32', 'telemetrix_esp32_common', 'telemetrix_esp32'],
     install_requires=['bleak'],
 
@@ -18,9 +18,9 @@ setup(
 
     author='Alan Yorinks',
     author_email='MisterYsLab@gmail.com',
-    url='https://github.com/MrYsLab/telemetrix-aio',
-    download_url='https://github.com/MrYsLab/telemetrix-aio',
-    keywords=['telemetrix', 'Arduino', 'Protocol', 'Python'],
+    url='https://github.com/MrYsLab/telemetrix-esp32',
+    download_url='https://github.com/MrYsLab/telemetrix-esp32',
+    keywords=['telemetrix', 'ESP32', 'Protocol', 'Python'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Other Environment',

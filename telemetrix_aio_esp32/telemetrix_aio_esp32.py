@@ -45,7 +45,7 @@ class TelemetrixAioEsp32:
 
         :param transport_is_wifi: Set to True forWI-FI or False for BLE
 
-        :param transport_address: mac address for BLE or IP address for WI-FI
+        :param transport_address: mac address for BLE or IP address for WI-FI.
                                   For BLE, if set to None, address discovery
                                   will be attempted.
                                   For
@@ -729,9 +729,9 @@ class TelemetrixAioEsp32:
 
         :param pin_number: GPIO pin number.
 
-       Valid pins:
+        Valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+             4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
 
         :param callback: async callback function
 
@@ -766,7 +766,7 @@ class TelemetrixAioEsp32:
 
         Valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+             4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
 
         :param callback: async callback function
 
@@ -845,7 +845,7 @@ class TelemetrixAioEsp32:
 
         Valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+             4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
 
         :param callback: callback function
 
@@ -907,7 +907,7 @@ class TelemetrixAioEsp32:
 
         Valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+             4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
 
 
         :param min_pulse: minimum pulse width
@@ -937,7 +937,7 @@ class TelemetrixAioEsp32:
 
         Valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+             4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
 
         :param echo_pin:
 
@@ -998,7 +998,8 @@ class TelemetrixAioEsp32:
 
         Valid CS pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+             4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+
         """
 
         if type(chip_select_list) != list:
@@ -1027,7 +1028,7 @@ class TelemetrixAioEsp32:
 
         Valid pins:
 
-           4, 12, 13, 14, 15, 27, 32, 33
+             4, 12, 13, 14, 15, 27, 32, 33
 
         :param differential: difference in previous to current value before
                              report will be generated
@@ -1133,9 +1134,8 @@ class TelemetrixAioEsp32:
 
         Valid GPIO pin numbers:
 
-                    2, 4, 5, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
-                    24, 25, 26, 27, 28., 29, 30, 31, 32, 33, 34, 35, 36,
-                    37, 38, 39
+                    4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
+                    22, 23, 25, 26, 27, 32, 33
 
         :param interface: Motor Interface Type:
 
@@ -1807,7 +1807,7 @@ class TelemetrixAioEsp32:
 
         Valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+             4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
 
         :param select: 0=select, 1=deselect
         """
@@ -1838,9 +1838,9 @@ class TelemetrixAioEsp32:
 
         callback returns a data list:
 
-        [SPI_READ_REPORT, count of data bytes read, data bytes, time-stamp]
+        [report_type, count of data bytes read, data bytes, time-stamp]
 
-        SPI_READ_REPORT = 13
+        report_type = 13
 
         """
 
@@ -1931,7 +1931,8 @@ class TelemetrixAioEsp32:
 
         Valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+             4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+
         """
         self.onewire_enabled = True
         command = [PrivateConstants.ONE_WIRE_INIT, pin]

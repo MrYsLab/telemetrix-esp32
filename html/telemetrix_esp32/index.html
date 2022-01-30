@@ -58,10 +58,12 @@ USA</p>
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 &#34;&#34;&#34;
 
+import socket
 import struct
 import sys
 import threading
 import time
+from collections import deque
 
 # noinspection PyUnresolvedReferences
 from telemetrix_esp32_common.private_constants import PrivateConstants
@@ -70,14 +72,14 @@ from telemetrix_esp32_common.private_constants import PrivateConstants
 class TelemetrixEsp32(threading.Thread):
     &#34;&#34;&#34;
     This class exposes and implements the TelemetrixAIO API for the ESP32 using
-    a BLE transport.
+    a WI-FI transport.
     It includes the public API methods as well as
     a set of private methods. 
 
     &#34;&#34;&#34;
 
     # noinspection PyPep8,PyPep8
-    def __init__(self, transport_is_ble=True, transport_address=None,
+    def __init__(self, ip_address=None,
                  ip_port=31336, autostart=True,
                  shutdown_on_exception=True,
                  restart_on_shutdown=True,
@@ -86,11 +88,9 @@ class TelemetrixEsp32(threading.Thread):
         &#34;&#34;&#34;
         The &#34;constructor&#34; method.
 
-        :param transport_is_ble: True if BLE or False if WI-FI
+        :param ip_address: WI-FI IP address assigned to the ESP32 board
 
-        :param transport_address: mac address for BLE or IP address for WI-FI
-
-        :param ip_port: if using a WI-FI interface, this specifies the IP port number
+        :param ip_port: Specifies the IP port number
 
         :param autostart: If you wish to call the start method within
                           your application, then set this to False.
@@ -101,11 +101,9 @@ class TelemetrixEsp32(threading.Thread):
 
         :param restart_on_shutdown: restart the esp32 processor upon shutdown
 
-
-
         &#34;&#34;&#34;
 
-        # check to make sure that Python interpreter is version 3.8.3 or greater
+        # check to make sure that Python interpreter is version 3.7 or greater
         python_version = sys.version_info
         if python_version[0] &gt;= 3:
             if python_version[1] &gt;= 7:
@@ -115,7 +113,8 @@ class TelemetrixEsp32(threading.Thread):
                 raise RuntimeError(&#34;ERROR: Python 3.7.0 or greater is &#34;
                                    &#34;required for use of this program.&#34;)
 
-        self.transport_is_ble = transport_is_ble
+        if not ip_address:
+            raise RuntimeError(&#34;An IP address must be specified.&#34;)
 
         # initialize threading parent
         threading.Thread.__init__(self)
@@ -123,32 +122,28 @@ class TelemetrixEsp32(threading.Thread):
         # create the threads and set them as daemons so
         # that they stop when the program is closed
 
-        if not self.transport_is_ble:
-            self.the_reporter_thread = \
-                threading.Thread(target=self._wifi_report_dispatcher)
-            self.the_data_receive_thread = threading.Thread(target=self._tcp_receiver)
-            self.the_data_receive_thread.daemon = True
-            self.the_reporter_thread.daemon = True
+        # a thread to process incoming reports
+        self.the_reporter_thread = \
+            threading.Thread(target=self._wifi_report_dispatcher)
+        self.the_reporter_thread.daemon = True
+
+        # a thread to handle socket communications
+        self.the_data_receive_thread = threading.Thread(target=self._tcp_receiver)
+        self.the_data_receive_thread.daemon = True
 
         # flag to allow the reporter and receive threads to run.
         self.run_event = threading.Event()
 
         # save input parameters
 
-        self.transport_is_ble = transport_is_ble
+        self.ip_address = ip_address
 
         self.ip_port = ip_port
 
         self.autostart = autostart
 
-        self.transport = None
-
-        # bleak sender id when BLE data is received
-        # not currently used
-        self.sender = None
-
-        self.transport_address = transport_address
         self.shutdown_on_exception = shutdown_on_exception
+
         self.restart_on_shutdown = restart_on_shutdown
 
         # dictionaries to store the callbacks for each pin
@@ -181,27 +176,33 @@ class TelemetrixEsp32(threading.Thread):
 
         self.sonar_count = 0
 
+        # callbacks for DHT devices
         self.dht_callbacks = {}
 
         self.dht_count = 0
 
+        # callbacks for touch pins
         self.touch_callbacks = {}
 
         # flag to indicate we are in shutdown mode
         self.shutdown_flag = False
 
-        self.report_buffer = []
+        # storage to build
 
+        # a dictionary to map incoming reports to their processing methods
         self.report_dispatch = {}
 
-        self.the_task = None
-
+        # version of the server firmware detected
         self.firmware_version = None
 
+        # communications socket
         self.sock = None
 
-        self.the_deque = None
+        # create a deque to receive incoming data
+        self.the_deque = deque()
 
+        # The report dispatcher table. It maps each report type
+        # to its processing method.
         # To add a command to the report dispatch table, append here.
         self.report_dispatch.update(
             {PrivateConstants.LOOP_COMMAND: self._report_loop_data})
@@ -255,15 +256,21 @@ class TelemetrixEsp32(threading.Thread):
         self.valid_gpio_input_pins = [4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
                                       22, 23, 25, 26, 27, 32, 33]
 
+        # Pin 2 is normally used to indicate connectivity state.
+        # Only use if you need to control the onboard LED.
         self.valid_gpio_output_pins = [2, 4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
-                                      22, 23, 25, 26, 27, 32, 33]
+                                       22, 23, 25, 26, 27, 32, 33]
 
         self.valid_touch_pins = [4, 12, 13, 14, 15, 27, 32, 33]
 
         self.valid_analog_in_pins = [32, 33, 34, 35, 36, 39]
 
         self.valid_servo_pins = [4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
-                                      22, 23, 25, 26, 27, 32, 33]
+                                 22, 23, 25, 26, 27, 32, 33]
+
+        # stepper motor support is implemented using the AccelStepper
+        # library. For details consult:
+        # https://www.airspayce.com/mikem/arduino/AccelStepper/classAccelStepper.html
 
         # updated when a new motor is added
         self.next_stepper_assigned = 0
@@ -274,7 +281,7 @@ class TelemetrixEsp32(threading.Thread):
         # maximum number of steppers supported
         self.max_number_of_steppers = 4
 
-        # number of steppers created - not to exceed the maximum
+        # number of steppers currently in use - not to exceed the maximum
         self.number_of_steppers = 0
 
         # dictionary to hold stepper motor information
@@ -293,6 +300,7 @@ class TelemetrixEsp32(threading.Thread):
         for motor in range(self.max_number_of_steppers):
             self.stepper_info_list.append(self.stepper_info)
 
+        # a
         print(
             f&#39;TelemetrixEsp32 Version:&#39;
             f&#39; {PrivateConstants.TELEMETRIX_ESP32_VERSION}&#39;)
@@ -306,47 +314,35 @@ class TelemetrixEsp32(threading.Thread):
         This method may be called directly, if the autostart
         parameter in __init__ is set to false.
 
-        This method instantiates the BLE transport interface
+        This method instantiates the WI-FI transport
 
         Use this method if you wish to start manually.
          &#34;&#34;&#34;
 
-        if self.transport_is_ble:
-            from telemetrix_esp32_common.ble_transport import BleTransport
-            self.transport = BleTransport(receive_callback=self._ble_report_dispatcher,
-                                          is_asyncio=False)
-            self.transport.ble_connect()
-        else:
-            import socket
-            from collections import deque
+        # establish the TCP/IP socket and connect to the ESP32 board
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.connect((self.ip_address, self.ip_port))
+        print(f&#39;Successfully connected to: {self.ip_address}:{self.ip_port}&#39;)
 
-            self.the_deque = deque()
+        # start the library threads
+        self.the_reporter_thread.start()
+        self.the_data_receive_thread.start()
+        self._run_threads()
 
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.connect((self.transport_address, self.ip_port))
-            print(f&#39;Successfully connected to: {self.transport_address}:{self.ip_port}&#39;)
-            # start the socket threads
-            self.the_reporter_thread.start()
-            self.the_data_receive_thread.start()
-            self._run_threads()
+        self._get_firmware_version()
 
-        for i in range(3):
-            self._get_firmware_version()
+        time.sleep(.5)
 
-        time.sleep(1)
-
+        # retrieve the server&#39;s firmware version
         if not self.firmware_version:
             if self.shutdown_on_exception:
                 self.shutdown()
             raise RuntimeError(&#39;Could not retrieve server firmware version&#39;)
 
-        if self.transport_is_ble:
-            print(f&#39;Telemetrix4Esp32BLE Firmware Version: {self.firmware_version[0]}&#39;
-                  f&#39;.{self.firmware_version[1]}.{self.firmware_version[2]}&#39;)
-        else:
-            print(f&#39;Telemetrix4Esp32WIFI Firmware Version: {self.firmware_version[0]}&#39;
-                  f&#39;.{self.firmware_version[1]}.{self.firmware_version[2]}&#39;)
+        print(f&#39;Telemetrix4Esp32WIFI Firmware Version: {self.firmware_version[0]}&#39;
+              f&#39;.{self.firmware_version[1]}.{self.firmware_version[2]}&#39;)
 
+        # enable all reporting by the server
         command = [PrivateConstants.ENABLE_ALL_REPORTS]
 
         self._send_command(command)
@@ -364,9 +360,10 @@ class TelemetrixEsp32(threading.Thread):
 
     def analog_write(self, channel, value):
         &#34;&#34;&#34;
-        Set the specified pin to the specified value.
+        Set the specified channel to the specified value.
 
-        :param channel: pwm channel number established in set_pin_mode_analog_output
+        :param channel: The pwm channel number is
+                        established in set_pin_mode_analog_output
 
         :param value: pin value (maximum 16 bits)
 
@@ -406,7 +403,9 @@ class TelemetrixEsp32(threading.Thread):
 
         callback returns a data list:
 
-        [I2C_READ_REPORT, address, register, count of data bytes, data bytes, time-stamp]
+        [report_type, address, register, count of data bytes, data bytes, time-stamp]
+
+        report_type = 9
 
         &#34;&#34;&#34;
         if not callback:
@@ -438,7 +437,9 @@ class TelemetrixEsp32(threading.Thread):
 
         callback returns a data list:
 
-        [I2C_READ_REPORT, address, register, count of data bytes, data bytes, time-stamp]
+        [report_type, address, register, count of data bytes, data bytes, time-stamp]
+
+        report_type = 9
 
         &#34;&#34;&#34;
         if not callback:
@@ -563,7 +564,7 @@ class TelemetrixEsp32(threading.Thread):
 
        valid pins:
 
-           2, 33, 34, 35, 36, 39
+           32, 33, 34, 35, 36, 39
 
         :param differential: difference in previous to current value before
                              report will be generated
@@ -572,9 +573,9 @@ class TelemetrixEsp32(threading.Thread):
 
         callback returns a data list:
 
-        [pin_type, pin_number, pin_value, raw_time_stamp]
+        [report_type, pin_number, pin_value, raw_time_stamp]
 
-        The pin_type for analog input pins = 2
+        The report_type for analog input pins = 2
 
         &#34;&#34;&#34;
 
@@ -590,7 +591,7 @@ class TelemetrixEsp32(threading.Thread):
         else:
             if self.shutdown_on_exception:
                 self.shutdown()
-            raise RuntimeError(&#39;set_pin_mode_digital_input: Invalid GPIO pin number&#39;)
+            raise RuntimeError(&#39;set_pin_mode_analog_input: Invalid GPIO pin number&#39;)
 
     def set_pin_mode_analog_output(self, pin_number, channel=0, frequency=5000.0,
                                    resolution=8):
@@ -604,7 +605,8 @@ class TelemetrixEsp32(threading.Thread):
 
        valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+           2, 4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
+           22, 23, 25, 26, 27, 32, 33
 
         :param channel: PWM channel (0 -15)
 
@@ -631,18 +633,15 @@ class TelemetrixEsp32(threading.Thread):
                             self.shutdown()
                         raise RuntimeError(
                             &#34;set_pin_mode_analog_out: Valid resolution range 8 - 16.&#34;)
-
                 else:
                     if self.shutdown_on_exception:
                         self.shutdown()
                     raise RuntimeError(
                         &#34;set_pin_mode_analog_out: Valid frequency range 10.0 - 300000.0.&#34;)
-
             else:
                 if self.shutdown_on_exception:
                     self.shutdown()
                 raise RuntimeError(&#34;set_pin_mode_analog_out: Valid channel range 0-15.&#34;)
-
         else:
             if self.shutdown_on_exception:
                 self.shutdown()
@@ -655,7 +654,7 @@ class TelemetrixEsp32(threading.Thread):
 
         The pwm_attach is initially done on the server side as a result of calling
         set_pin_mode_analog_output. This method is provided if you with to manually
-        do a pwm_attach.
+        execute a pwm_attach.
 
         :param pin_number: GPIO pin Number
 
@@ -758,9 +757,9 @@ class TelemetrixEsp32(threading.Thread):
 
         callback returns a data list:
 
-        [pin_type, pin_number, pin_value, raw_time_stamp]
+        [report_type, pin_number, pin_value, raw_time_stamp]
 
-        The pin_type for digital input pins = 2
+        The report_type for digital input pins = 2
 
         &#34;&#34;&#34;
         if pin_number in self.valid_gpio_output_pins:
@@ -785,9 +784,9 @@ class TelemetrixEsp32(threading.Thread):
 
         callback returns a data list:
 
-        [pin_type, pin_number, pin_value, raw_time_stamp]
+        [report_type, pin_number, pin_value, raw_time_stamp]
 
-        The pin_type for digital input pins with pull_downs enabled = 2
+        The report_type for digital input pins with pull_downs enabled = 2
 
         &#34;&#34;&#34;
         if not callback:
@@ -814,15 +813,15 @@ class TelemetrixEsp32(threading.Thread):
 
         Valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+             4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
 
         :param callback: callback function
 
         callback returns a data list:
 
-        [pin_type, pin_number, pin_value, raw_time_stamp]
+        [report_type, pin_number, pin_value, raw_time_stamp]
 
-        The pin_type for digital input pins with pullups enabled = 2
+        The report_type for digital input pins with pullups enabled = 2
 
         &#34;&#34;&#34;
         if not callback:
@@ -893,9 +892,33 @@ class TelemetrixEsp32(threading.Thread):
 
         Valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+             4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
 
         :param callback: callback function
+
+        callback returns a data list:
+
+        Valid data report:
+
+        [report_type, valid_data=0, pin_number, humidity,
+         temperature, time-stamp]
+
+        Errored read report:
+        [report_type, valid_data!=0, pin_number, error_value, time-stamp]
+
+        error_value:
+
+            DHTLIB_ERROR_CHECKSUM            -1
+            DHTLIB_ERROR_TIMEOUT_A           -2
+            DHTLIB_ERROR_BIT_SHIFT           -3
+            DHTLIB_ERROR_SENSOR_NOT_READY    -4
+            DHTLIB_ERROR_TIMEOUT_C           -5
+            DHTLIB_ERROR_TIMEOUT_D           -6
+            DHTLIB_ERROR_TIMEOUT_B           -7
+            DHTLIB_WAITING_FOR_READ          -8
+
+
+        report_type = 11
 
         &#34;&#34;&#34;
 
@@ -908,7 +931,6 @@ class TelemetrixEsp32(threading.Thread):
             if self.dht_count &lt; PrivateConstants.MAX_DHTS - 1:
                 self.dht_callbacks[pin_number] = callback
                 self.dht_count += 1
-
                 command = [PrivateConstants.DHT_NEW, pin_number]
                 self._send_command(command)
             else:
@@ -931,7 +953,7 @@ class TelemetrixEsp32(threading.Thread):
 
         Valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+             4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
 
 
         :param min_pulse: minimum pulse width
@@ -954,17 +976,24 @@ class TelemetrixEsp32(threading.Thread):
     def set_pin_mode_sonar(self, trigger_pin, echo_pin,
                            callback):
         &#34;&#34;&#34;
-        Attach pins to a servo device. Trigger and echo pins must not be the same value.
+        Attach pins to a sonar device. Trigger and echo pins must not be the same value.
+        Distance is reported in centimeters.
 
-        :param trigger_pin:
+        :param trigger_pin: GPIO trigger pin number
+
+        :param echo_pin:: GPIO echo pin number
 
         Valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+             4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
 
-        :param echo_pin:
+        :param callback:  callback function
 
-        :param callback:  callback
+        callback returns a data list:
+
+        [report_type, trigger_pin, distance_value, time_stamp]
+
+        report_type = 10
 
         &#34;&#34;&#34;
 
@@ -1044,7 +1073,7 @@ class TelemetrixEsp32(threading.Thread):
 
         Valid pins:
 
-           4, 12, 13, 14, 15, 27, 32, 33
+             4, 12, 13, 14, 15, 27, 32, 33
 
         :param differential: difference in previous to current value before
                              report will be generated
@@ -1054,9 +1083,9 @@ class TelemetrixEsp32(threading.Thread):
 
         callback returns a data list:
 
-        [pin_type, pin_number, pin_value, raw_time_stamp]
+        [report_type, pin_number, pin_value, raw_time_stamp]
 
-        The pin_type for touch pins = 13
+        The report_type for touch pins = 13
 
         &#34;&#34;&#34;
         if pin_number in self.valid_touch_pins:
@@ -1150,9 +1179,8 @@ class TelemetrixEsp32(threading.Thread):
 
         Valid GPIO pin numbers:
 
-                    2, 4, 5, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
-                    24, 25, 26, 27, 28., 29, 30, 31, 32, 33, 34, 35, 36,
-                    37, 38, 39
+                    4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
+                    22, 23, 25, 26, 27, 32, 33
 
         :param interface: Motor Interface Type:
 
@@ -1855,9 +1883,9 @@ class TelemetrixEsp32(threading.Thread):
 
         callback returns a data list:
 
-        [SPI_READ_REPORT, count of data bytes read, data bytes, time-stamp]
+        [report_type, count of data bytes read, data bytes, time-stamp]
 
-        SPI_READ_REPORT = 13
+        report_type = 13
 
         &#34;&#34;&#34;
 
@@ -1948,7 +1976,7 @@ class TelemetrixEsp32(threading.Thread):
 
         Valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+             4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
         &#34;&#34;&#34;
         self.onewire_enabled = True
         command = [PrivateConstants.ONE_WIRE_INIT, pin]
@@ -1962,13 +1990,13 @@ class TelemetrixEsp32(threading.Thread):
 
         callback returns:
 
-        [ONEWIRE_REPORT, ONEWIRE_RESET, reset result byte,
+        [report_type, ONEWIRE_RESET, reset result byte,
                         timestamp]
 
         Result byte: 1 if a device responds with a presence pulse.  Returns 0 if there
         is no device or the bus is shorted or otherwise held low for more than 250uS
 
-        ONEWIRE_REPORT = 14
+        report_type = 14
 
         Onewire report subtype ONEWIRE_RESET=29
         &#34;&#34;&#34;
@@ -2061,9 +2089,9 @@ class TelemetrixEsp32(threading.Thread):
 
         callback returns a data list:
 
-        [ONEWIRE_REPORT, ONEWIRE_READ, data byte, time-stamp]
+        [report_id, ONEWIRE_READ, data byte, time-stamp]
 
-        ONEWIRE_REPORT = 14
+        report_id = 14
 
         Onewire report subtype ONEWIRE_READ=29
 
@@ -2108,9 +2136,9 @@ class TelemetrixEsp32(threading.Thread):
 
         callback returns a data list:
 
-        [ONEWIRE_REPORT, ONEWIRE_SEARCH=31, 8 byte address, time-stamp]
+        [report_id, ONEWIRE_SEARCH=31, 8 byte address, time-stamp]
 
-        ONEWIRE_REPORT = 14
+        report_id = 14
 
         Onewire report subtype ONEWIRE_SEARCH=31
         &#34;&#34;&#34;
@@ -2139,9 +2167,9 @@ class TelemetrixEsp32(threading.Thread):
 
         callback returns a data list:
 
-        [ONEWIRE_REPORT, ONEWIRE_CRC8, CRC, time-stamp]
+        [report_id, ONEWIRE_CRC8, CRC, time-stamp]
 
-        ONEWIRE_REPORT = 14
+        report_id = 14
 
         Onewire report subtype ONEWIRE_CRC8 = 32
 
@@ -2203,19 +2231,15 @@ class TelemetrixEsp32(threading.Thread):
         &#34;&#34;&#34;
         self.shutdown_flag = True
 
-        if not self.transport_is_ble:
-            self._stop_threads()
+        self._stop_threads()
 
         # stop all reporting - both analog and digital
         command = [PrivateConstants.STOP_ALL_REPORTS]
         self._send_command(command)
         if self.restart_on_shutdown:
-            # self.ble_transport.disconnect()
             command = [PrivateConstants.RESET]
             self._send_command(command)
             time.sleep(.1)
-        if self.the_task:
-            self.the_task.cancel()
 
     def disable_all_reporting(self):
         &#34;&#34;&#34;
@@ -2282,10 +2306,11 @@ class TelemetrixEsp32(threading.Thread):
 
         &#34;&#34;&#34;
         self.the_sender = sender
-        report = data[1]
+        if data:
+            report = data[1]
 
-        # noinspection PyArgumentList
-        self.report_dispatch[report](data[2:])
+            # noinspection PyArgumentList
+            self.report_dispatch[report](data[2:])
 
     # noinspection PyArgumentList
     def _wifi_report_dispatcher(self):
@@ -2495,7 +2520,8 @@ class TelemetrixEsp32(threading.Thread):
 
         :param report: data[0] = trigger pin, data[1] and data[2] = distance
 
-        callback report format: [PrivateConstants.SONAR_DISTANCE, trigger_pin, distance_value, time_stamp]
+        callback report format: [PrivateConstants.SONAR_DISTANCE, trigger_pin,
+                                 distance_value, time_stamp]
         &#34;&#34;&#34;
 
         # get callback from pin number
@@ -2669,10 +2695,8 @@ class TelemetrixEsp32(threading.Thread):
         command.insert(0, len(command))
         # print(command)
         send_message = bytes(command)
-        if self.transport_is_ble:
-            self.transport.ble_write(send_message)
-        else:
-            self.sock.sendall(send_message)
+
+        self.sock.sendall(send_message)
 
     def _run_threads(self):
         self.run_event.set()
@@ -2692,7 +2716,7 @@ class TelemetrixEsp32(threading.Thread):
 
         # Start this thread only if ip_address is set
 
-        if self.transport_address:
+        if self.ip_address:
 
             while self._is_running() and not self.shutdown_flag:
                 try:
@@ -2715,17 +2739,16 @@ class TelemetrixEsp32(threading.Thread):
 <dl>
 <dt id="telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32"><code class="flex name class">
 <span>class <span class="ident">TelemetrixEsp32</span></span>
-<span>(</span><span>transport_is_ble=True, transport_address=None, ip_port=31336, autostart=True, shutdown_on_exception=True, restart_on_shutdown=True)</span>
+<span>(</span><span>ip_address=None, ip_port=31336, autostart=True, shutdown_on_exception=True, restart_on_shutdown=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This class exposes and implements the TelemetrixAIO API for the ESP32 using
-a BLE transport.
+a WI-FI transport.
 It includes the public API methods as well as
 a set of private methods. </p>
 <p>The "constructor" method.</p>
-<p>:param transport_is_ble: True if BLE or False if WI-FI</p>
-<p>:param transport_address: mac address for BLE or IP address for WI-FI</p>
-<p>:param ip_port: if using a WI-FI interface, this specifies the IP port number</p>
+<p>:param ip_address: WI-FI IP address assigned to the ESP32 board</p>
+<p>:param ip_port: Specifies the IP port number</p>
 <p>:param autostart: If you wish to call the start method within
 your application, then set this to False.</p>
 <p>:param shutdown_on_exception: call shutdown before raising
@@ -2739,14 +2762,14 @@ receiving a KeyboardInterrupt exception</p>
 <pre><code class="python">class TelemetrixEsp32(threading.Thread):
     &#34;&#34;&#34;
     This class exposes and implements the TelemetrixAIO API for the ESP32 using
-    a BLE transport.
+    a WI-FI transport.
     It includes the public API methods as well as
     a set of private methods. 
 
     &#34;&#34;&#34;
 
     # noinspection PyPep8,PyPep8
-    def __init__(self, transport_is_ble=True, transport_address=None,
+    def __init__(self, ip_address=None,
                  ip_port=31336, autostart=True,
                  shutdown_on_exception=True,
                  restart_on_shutdown=True,
@@ -2755,11 +2778,9 @@ receiving a KeyboardInterrupt exception</p>
         &#34;&#34;&#34;
         The &#34;constructor&#34; method.
 
-        :param transport_is_ble: True if BLE or False if WI-FI
+        :param ip_address: WI-FI IP address assigned to the ESP32 board
 
-        :param transport_address: mac address for BLE or IP address for WI-FI
-
-        :param ip_port: if using a WI-FI interface, this specifies the IP port number
+        :param ip_port: Specifies the IP port number
 
         :param autostart: If you wish to call the start method within
                           your application, then set this to False.
@@ -2770,11 +2791,9 @@ receiving a KeyboardInterrupt exception</p>
 
         :param restart_on_shutdown: restart the esp32 processor upon shutdown
 
-
-
         &#34;&#34;&#34;
 
-        # check to make sure that Python interpreter is version 3.8.3 or greater
+        # check to make sure that Python interpreter is version 3.7 or greater
         python_version = sys.version_info
         if python_version[0] &gt;= 3:
             if python_version[1] &gt;= 7:
@@ -2784,7 +2803,8 @@ receiving a KeyboardInterrupt exception</p>
                 raise RuntimeError(&#34;ERROR: Python 3.7.0 or greater is &#34;
                                    &#34;required for use of this program.&#34;)
 
-        self.transport_is_ble = transport_is_ble
+        if not ip_address:
+            raise RuntimeError(&#34;An IP address must be specified.&#34;)
 
         # initialize threading parent
         threading.Thread.__init__(self)
@@ -2792,32 +2812,28 @@ receiving a KeyboardInterrupt exception</p>
         # create the threads and set them as daemons so
         # that they stop when the program is closed
 
-        if not self.transport_is_ble:
-            self.the_reporter_thread = \
-                threading.Thread(target=self._wifi_report_dispatcher)
-            self.the_data_receive_thread = threading.Thread(target=self._tcp_receiver)
-            self.the_data_receive_thread.daemon = True
-            self.the_reporter_thread.daemon = True
+        # a thread to process incoming reports
+        self.the_reporter_thread = \
+            threading.Thread(target=self._wifi_report_dispatcher)
+        self.the_reporter_thread.daemon = True
+
+        # a thread to handle socket communications
+        self.the_data_receive_thread = threading.Thread(target=self._tcp_receiver)
+        self.the_data_receive_thread.daemon = True
 
         # flag to allow the reporter and receive threads to run.
         self.run_event = threading.Event()
 
         # save input parameters
 
-        self.transport_is_ble = transport_is_ble
+        self.ip_address = ip_address
 
         self.ip_port = ip_port
 
         self.autostart = autostart
 
-        self.transport = None
-
-        # bleak sender id when BLE data is received
-        # not currently used
-        self.sender = None
-
-        self.transport_address = transport_address
         self.shutdown_on_exception = shutdown_on_exception
+
         self.restart_on_shutdown = restart_on_shutdown
 
         # dictionaries to store the callbacks for each pin
@@ -2850,27 +2866,33 @@ receiving a KeyboardInterrupt exception</p>
 
         self.sonar_count = 0
 
+        # callbacks for DHT devices
         self.dht_callbacks = {}
 
         self.dht_count = 0
 
+        # callbacks for touch pins
         self.touch_callbacks = {}
 
         # flag to indicate we are in shutdown mode
         self.shutdown_flag = False
 
-        self.report_buffer = []
+        # storage to build
 
+        # a dictionary to map incoming reports to their processing methods
         self.report_dispatch = {}
 
-        self.the_task = None
-
+        # version of the server firmware detected
         self.firmware_version = None
 
+        # communications socket
         self.sock = None
 
-        self.the_deque = None
+        # create a deque to receive incoming data
+        self.the_deque = deque()
 
+        # The report dispatcher table. It maps each report type
+        # to its processing method.
         # To add a command to the report dispatch table, append here.
         self.report_dispatch.update(
             {PrivateConstants.LOOP_COMMAND: self._report_loop_data})
@@ -2924,15 +2946,21 @@ receiving a KeyboardInterrupt exception</p>
         self.valid_gpio_input_pins = [4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
                                       22, 23, 25, 26, 27, 32, 33]
 
+        # Pin 2 is normally used to indicate connectivity state.
+        # Only use if you need to control the onboard LED.
         self.valid_gpio_output_pins = [2, 4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
-                                      22, 23, 25, 26, 27, 32, 33]
+                                       22, 23, 25, 26, 27, 32, 33]
 
         self.valid_touch_pins = [4, 12, 13, 14, 15, 27, 32, 33]
 
         self.valid_analog_in_pins = [32, 33, 34, 35, 36, 39]
 
         self.valid_servo_pins = [4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
-                                      22, 23, 25, 26, 27, 32, 33]
+                                 22, 23, 25, 26, 27, 32, 33]
+
+        # stepper motor support is implemented using the AccelStepper
+        # library. For details consult:
+        # https://www.airspayce.com/mikem/arduino/AccelStepper/classAccelStepper.html
 
         # updated when a new motor is added
         self.next_stepper_assigned = 0
@@ -2943,7 +2971,7 @@ receiving a KeyboardInterrupt exception</p>
         # maximum number of steppers supported
         self.max_number_of_steppers = 4
 
-        # number of steppers created - not to exceed the maximum
+        # number of steppers currently in use - not to exceed the maximum
         self.number_of_steppers = 0
 
         # dictionary to hold stepper motor information
@@ -2962,6 +2990,7 @@ receiving a KeyboardInterrupt exception</p>
         for motor in range(self.max_number_of_steppers):
             self.stepper_info_list.append(self.stepper_info)
 
+        # a
         print(
             f&#39;TelemetrixEsp32 Version:&#39;
             f&#39; {PrivateConstants.TELEMETRIX_ESP32_VERSION}&#39;)
@@ -2975,47 +3004,35 @@ receiving a KeyboardInterrupt exception</p>
         This method may be called directly, if the autostart
         parameter in __init__ is set to false.
 
-        This method instantiates the BLE transport interface
+        This method instantiates the WI-FI transport
 
         Use this method if you wish to start manually.
          &#34;&#34;&#34;
 
-        if self.transport_is_ble:
-            from telemetrix_esp32_common.ble_transport import BleTransport
-            self.transport = BleTransport(receive_callback=self._ble_report_dispatcher,
-                                          is_asyncio=False)
-            self.transport.ble_connect()
-        else:
-            import socket
-            from collections import deque
+        # establish the TCP/IP socket and connect to the ESP32 board
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.connect((self.ip_address, self.ip_port))
+        print(f&#39;Successfully connected to: {self.ip_address}:{self.ip_port}&#39;)
 
-            self.the_deque = deque()
+        # start the library threads
+        self.the_reporter_thread.start()
+        self.the_data_receive_thread.start()
+        self._run_threads()
 
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.connect((self.transport_address, self.ip_port))
-            print(f&#39;Successfully connected to: {self.transport_address}:{self.ip_port}&#39;)
-            # start the socket threads
-            self.the_reporter_thread.start()
-            self.the_data_receive_thread.start()
-            self._run_threads()
+        self._get_firmware_version()
 
-        for i in range(3):
-            self._get_firmware_version()
+        time.sleep(.5)
 
-        time.sleep(1)
-
+        # retrieve the server&#39;s firmware version
         if not self.firmware_version:
             if self.shutdown_on_exception:
                 self.shutdown()
             raise RuntimeError(&#39;Could not retrieve server firmware version&#39;)
 
-        if self.transport_is_ble:
-            print(f&#39;Telemetrix4Esp32BLE Firmware Version: {self.firmware_version[0]}&#39;
-                  f&#39;.{self.firmware_version[1]}.{self.firmware_version[2]}&#39;)
-        else:
-            print(f&#39;Telemetrix4Esp32WIFI Firmware Version: {self.firmware_version[0]}&#39;
-                  f&#39;.{self.firmware_version[1]}.{self.firmware_version[2]}&#39;)
+        print(f&#39;Telemetrix4Esp32WIFI Firmware Version: {self.firmware_version[0]}&#39;
+              f&#39;.{self.firmware_version[1]}.{self.firmware_version[2]}&#39;)
 
+        # enable all reporting by the server
         command = [PrivateConstants.ENABLE_ALL_REPORTS]
 
         self._send_command(command)
@@ -3033,9 +3050,10 @@ receiving a KeyboardInterrupt exception</p>
 
     def analog_write(self, channel, value):
         &#34;&#34;&#34;
-        Set the specified pin to the specified value.
+        Set the specified channel to the specified value.
 
-        :param channel: pwm channel number established in set_pin_mode_analog_output
+        :param channel: The pwm channel number is
+                        established in set_pin_mode_analog_output
 
         :param value: pin value (maximum 16 bits)
 
@@ -3075,7 +3093,9 @@ receiving a KeyboardInterrupt exception</p>
 
         callback returns a data list:
 
-        [I2C_READ_REPORT, address, register, count of data bytes, data bytes, time-stamp]
+        [report_type, address, register, count of data bytes, data bytes, time-stamp]
+
+        report_type = 9
 
         &#34;&#34;&#34;
         if not callback:
@@ -3107,7 +3127,9 @@ receiving a KeyboardInterrupt exception</p>
 
         callback returns a data list:
 
-        [I2C_READ_REPORT, address, register, count of data bytes, data bytes, time-stamp]
+        [report_type, address, register, count of data bytes, data bytes, time-stamp]
+
+        report_type = 9
 
         &#34;&#34;&#34;
         if not callback:
@@ -3232,7 +3254,7 @@ receiving a KeyboardInterrupt exception</p>
 
        valid pins:
 
-           2, 33, 34, 35, 36, 39
+           32, 33, 34, 35, 36, 39
 
         :param differential: difference in previous to current value before
                              report will be generated
@@ -3241,9 +3263,9 @@ receiving a KeyboardInterrupt exception</p>
 
         callback returns a data list:
 
-        [pin_type, pin_number, pin_value, raw_time_stamp]
+        [report_type, pin_number, pin_value, raw_time_stamp]
 
-        The pin_type for analog input pins = 2
+        The report_type for analog input pins = 2
 
         &#34;&#34;&#34;
 
@@ -3259,7 +3281,7 @@ receiving a KeyboardInterrupt exception</p>
         else:
             if self.shutdown_on_exception:
                 self.shutdown()
-            raise RuntimeError(&#39;set_pin_mode_digital_input: Invalid GPIO pin number&#39;)
+            raise RuntimeError(&#39;set_pin_mode_analog_input: Invalid GPIO pin number&#39;)
 
     def set_pin_mode_analog_output(self, pin_number, channel=0, frequency=5000.0,
                                    resolution=8):
@@ -3273,7 +3295,8 @@ receiving a KeyboardInterrupt exception</p>
 
        valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+           2, 4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
+           22, 23, 25, 26, 27, 32, 33
 
         :param channel: PWM channel (0 -15)
 
@@ -3300,18 +3323,15 @@ receiving a KeyboardInterrupt exception</p>
                             self.shutdown()
                         raise RuntimeError(
                             &#34;set_pin_mode_analog_out: Valid resolution range 8 - 16.&#34;)
-
                 else:
                     if self.shutdown_on_exception:
                         self.shutdown()
                     raise RuntimeError(
                         &#34;set_pin_mode_analog_out: Valid frequency range 10.0 - 300000.0.&#34;)
-
             else:
                 if self.shutdown_on_exception:
                     self.shutdown()
                 raise RuntimeError(&#34;set_pin_mode_analog_out: Valid channel range 0-15.&#34;)
-
         else:
             if self.shutdown_on_exception:
                 self.shutdown()
@@ -3324,7 +3344,7 @@ receiving a KeyboardInterrupt exception</p>
 
         The pwm_attach is initially done on the server side as a result of calling
         set_pin_mode_analog_output. This method is provided if you with to manually
-        do a pwm_attach.
+        execute a pwm_attach.
 
         :param pin_number: GPIO pin Number
 
@@ -3427,9 +3447,9 @@ receiving a KeyboardInterrupt exception</p>
 
         callback returns a data list:
 
-        [pin_type, pin_number, pin_value, raw_time_stamp]
+        [report_type, pin_number, pin_value, raw_time_stamp]
 
-        The pin_type for digital input pins = 2
+        The report_type for digital input pins = 2
 
         &#34;&#34;&#34;
         if pin_number in self.valid_gpio_output_pins:
@@ -3454,9 +3474,9 @@ receiving a KeyboardInterrupt exception</p>
 
         callback returns a data list:
 
-        [pin_type, pin_number, pin_value, raw_time_stamp]
+        [report_type, pin_number, pin_value, raw_time_stamp]
 
-        The pin_type for digital input pins with pull_downs enabled = 2
+        The report_type for digital input pins with pull_downs enabled = 2
 
         &#34;&#34;&#34;
         if not callback:
@@ -3483,15 +3503,15 @@ receiving a KeyboardInterrupt exception</p>
 
         Valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+             4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
 
         :param callback: callback function
 
         callback returns a data list:
 
-        [pin_type, pin_number, pin_value, raw_time_stamp]
+        [report_type, pin_number, pin_value, raw_time_stamp]
 
-        The pin_type for digital input pins with pullups enabled = 2
+        The report_type for digital input pins with pullups enabled = 2
 
         &#34;&#34;&#34;
         if not callback:
@@ -3562,9 +3582,33 @@ receiving a KeyboardInterrupt exception</p>
 
         Valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+             4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
 
         :param callback: callback function
+
+        callback returns a data list:
+
+        Valid data report:
+
+        [report_type, valid_data=0, pin_number, humidity,
+         temperature, time-stamp]
+
+        Errored read report:
+        [report_type, valid_data!=0, pin_number, error_value, time-stamp]
+
+        error_value:
+
+            DHTLIB_ERROR_CHECKSUM            -1
+            DHTLIB_ERROR_TIMEOUT_A           -2
+            DHTLIB_ERROR_BIT_SHIFT           -3
+            DHTLIB_ERROR_SENSOR_NOT_READY    -4
+            DHTLIB_ERROR_TIMEOUT_C           -5
+            DHTLIB_ERROR_TIMEOUT_D           -6
+            DHTLIB_ERROR_TIMEOUT_B           -7
+            DHTLIB_WAITING_FOR_READ          -8
+
+
+        report_type = 11
 
         &#34;&#34;&#34;
 
@@ -3577,7 +3621,6 @@ receiving a KeyboardInterrupt exception</p>
             if self.dht_count &lt; PrivateConstants.MAX_DHTS - 1:
                 self.dht_callbacks[pin_number] = callback
                 self.dht_count += 1
-
                 command = [PrivateConstants.DHT_NEW, pin_number]
                 self._send_command(command)
             else:
@@ -3600,7 +3643,7 @@ receiving a KeyboardInterrupt exception</p>
 
         Valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+             4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
 
 
         :param min_pulse: minimum pulse width
@@ -3623,17 +3666,24 @@ receiving a KeyboardInterrupt exception</p>
     def set_pin_mode_sonar(self, trigger_pin, echo_pin,
                            callback):
         &#34;&#34;&#34;
-        Attach pins to a servo device. Trigger and echo pins must not be the same value.
+        Attach pins to a sonar device. Trigger and echo pins must not be the same value.
+        Distance is reported in centimeters.
 
-        :param trigger_pin:
+        :param trigger_pin: GPIO trigger pin number
+
+        :param echo_pin:: GPIO echo pin number
 
         Valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+             4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
 
-        :param echo_pin:
+        :param callback:  callback function
 
-        :param callback:  callback
+        callback returns a data list:
+
+        [report_type, trigger_pin, distance_value, time_stamp]
+
+        report_type = 10
 
         &#34;&#34;&#34;
 
@@ -3713,7 +3763,7 @@ receiving a KeyboardInterrupt exception</p>
 
         Valid pins:
 
-           4, 12, 13, 14, 15, 27, 32, 33
+             4, 12, 13, 14, 15, 27, 32, 33
 
         :param differential: difference in previous to current value before
                              report will be generated
@@ -3723,9 +3773,9 @@ receiving a KeyboardInterrupt exception</p>
 
         callback returns a data list:
 
-        [pin_type, pin_number, pin_value, raw_time_stamp]
+        [report_type, pin_number, pin_value, raw_time_stamp]
 
-        The pin_type for touch pins = 13
+        The report_type for touch pins = 13
 
         &#34;&#34;&#34;
         if pin_number in self.valid_touch_pins:
@@ -3819,9 +3869,8 @@ receiving a KeyboardInterrupt exception</p>
 
         Valid GPIO pin numbers:
 
-                    2, 4, 5, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
-                    24, 25, 26, 27, 28., 29, 30, 31, 32, 33, 34, 35, 36,
-                    37, 38, 39
+                    4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
+                    22, 23, 25, 26, 27, 32, 33
 
         :param interface: Motor Interface Type:
 
@@ -4524,9 +4573,9 @@ receiving a KeyboardInterrupt exception</p>
 
         callback returns a data list:
 
-        [SPI_READ_REPORT, count of data bytes read, data bytes, time-stamp]
+        [report_type, count of data bytes read, data bytes, time-stamp]
 
-        SPI_READ_REPORT = 13
+        report_type = 13
 
         &#34;&#34;&#34;
 
@@ -4617,7 +4666,7 @@ receiving a KeyboardInterrupt exception</p>
 
         Valid pins:
 
-           4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+             4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
         &#34;&#34;&#34;
         self.onewire_enabled = True
         command = [PrivateConstants.ONE_WIRE_INIT, pin]
@@ -4631,13 +4680,13 @@ receiving a KeyboardInterrupt exception</p>
 
         callback returns:
 
-        [ONEWIRE_REPORT, ONEWIRE_RESET, reset result byte,
+        [report_type, ONEWIRE_RESET, reset result byte,
                         timestamp]
 
         Result byte: 1 if a device responds with a presence pulse.  Returns 0 if there
         is no device or the bus is shorted or otherwise held low for more than 250uS
 
-        ONEWIRE_REPORT = 14
+        report_type = 14
 
         Onewire report subtype ONEWIRE_RESET=29
         &#34;&#34;&#34;
@@ -4730,9 +4779,9 @@ receiving a KeyboardInterrupt exception</p>
 
         callback returns a data list:
 
-        [ONEWIRE_REPORT, ONEWIRE_READ, data byte, time-stamp]
+        [report_id, ONEWIRE_READ, data byte, time-stamp]
 
-        ONEWIRE_REPORT = 14
+        report_id = 14
 
         Onewire report subtype ONEWIRE_READ=29
 
@@ -4777,9 +4826,9 @@ receiving a KeyboardInterrupt exception</p>
 
         callback returns a data list:
 
-        [ONEWIRE_REPORT, ONEWIRE_SEARCH=31, 8 byte address, time-stamp]
+        [report_id, ONEWIRE_SEARCH=31, 8 byte address, time-stamp]
 
-        ONEWIRE_REPORT = 14
+        report_id = 14
 
         Onewire report subtype ONEWIRE_SEARCH=31
         &#34;&#34;&#34;
@@ -4808,9 +4857,9 @@ receiving a KeyboardInterrupt exception</p>
 
         callback returns a data list:
 
-        [ONEWIRE_REPORT, ONEWIRE_CRC8, CRC, time-stamp]
+        [report_id, ONEWIRE_CRC8, CRC, time-stamp]
 
-        ONEWIRE_REPORT = 14
+        report_id = 14
 
         Onewire report subtype ONEWIRE_CRC8 = 32
 
@@ -4872,19 +4921,15 @@ receiving a KeyboardInterrupt exception</p>
         &#34;&#34;&#34;
         self.shutdown_flag = True
 
-        if not self.transport_is_ble:
-            self._stop_threads()
+        self._stop_threads()
 
         # stop all reporting - both analog and digital
         command = [PrivateConstants.STOP_ALL_REPORTS]
         self._send_command(command)
         if self.restart_on_shutdown:
-            # self.ble_transport.disconnect()
             command = [PrivateConstants.RESET]
             self._send_command(command)
             time.sleep(.1)
-        if self.the_task:
-            self.the_task.cancel()
 
     def disable_all_reporting(self):
         &#34;&#34;&#34;
@@ -4951,10 +4996,11 @@ receiving a KeyboardInterrupt exception</p>
 
         &#34;&#34;&#34;
         self.the_sender = sender
-        report = data[1]
+        if data:
+            report = data[1]
 
-        # noinspection PyArgumentList
-        self.report_dispatch[report](data[2:])
+            # noinspection PyArgumentList
+            self.report_dispatch[report](data[2:])
 
     # noinspection PyArgumentList
     def _wifi_report_dispatcher(self):
@@ -5164,7 +5210,8 @@ receiving a KeyboardInterrupt exception</p>
 
         :param report: data[0] = trigger pin, data[1] and data[2] = distance
 
-        callback report format: [PrivateConstants.SONAR_DISTANCE, trigger_pin, distance_value, time_stamp]
+        callback report format: [PrivateConstants.SONAR_DISTANCE, trigger_pin,
+                                 distance_value, time_stamp]
         &#34;&#34;&#34;
 
         # get callback from pin number
@@ -5338,10 +5385,8 @@ receiving a KeyboardInterrupt exception</p>
         command.insert(0, len(command))
         # print(command)
         send_message = bytes(command)
-        if self.transport_is_ble:
-            self.transport.ble_write(send_message)
-        else:
-            self.sock.sendall(send_message)
+
+        self.sock.sendall(send_message)
 
     def _run_threads(self):
         self.run_event.set()
@@ -5361,7 +5406,7 @@ receiving a KeyboardInterrupt exception</p>
 
         # Start this thread only if ip_address is set
 
-        if self.transport_address:
+        if self.ip_address:
 
             while self._is_running() and not self.shutdown_flag:
                 try:
@@ -5382,8 +5427,9 @@ receiving a KeyboardInterrupt exception</p>
 <span>def <span class="ident">analog_write</span></span>(<span>self, channel, value)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Set the specified pin to the specified value.</p>
-<p>:param channel: pwm channel number established in set_pin_mode_analog_output</p>
+<div class="desc"><p>Set the specified channel to the specified value.</p>
+<p>:param channel: The pwm channel number is
+established in set_pin_mode_analog_output</p>
 <p>:param value: pin value (maximum 16 bits)</p></div>
 <details class="source">
 <summary>
@@ -5391,9 +5437,10 @@ receiving a KeyboardInterrupt exception</p>
 </summary>
 <pre><code class="python">def analog_write(self, channel, value):
     &#34;&#34;&#34;
-    Set the specified pin to the specified value.
+    Set the specified channel to the specified value.
 
-    :param channel: pwm channel number established in set_pin_mode_analog_output
+    :param channel: The pwm channel number is
+                    established in set_pin_mode_analog_output
 
     :param value: pin value (maximum 16 bits)
 
@@ -5412,7 +5459,7 @@ receiving a KeyboardInterrupt exception</p>
 attach the specified pin.</p>
 <p>The pwm_attach is initially done on the server side as a result of calling
 set_pin_mode_analog_output. This method is provided if you with to manually
-do a pwm_attach.</p>
+execute a pwm_attach.</p>
 <p>:param pin_number: GPIO pin Number</p>
 <p>:param channel:
 PWM Channel Number (0-15)</p></div>
@@ -5427,7 +5474,7 @@ PWM Channel Number (0-15)</p></div>
 
     The pwm_attach is initially done on the server side as a result of calling
     set_pin_mode_analog_output. This method is provided if you with to manually
-    do a pwm_attach.
+    execute a pwm_attach.
 
     :param pin_number: GPIO pin Number
 
@@ -5664,7 +5711,8 @@ the i2c device.</p>
 <p>:param callback: Required callback function to report i2c data as a
 result of read command</p>
 <p>callback returns a data list:</p>
-<p>[I2C_READ_REPORT, address, register, count of data bytes, data bytes, time-stamp]</p></div>
+<p>[report_type, address, register, count of data bytes, data bytes, time-stamp]</p>
+<p>report_type = 9</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -5687,7 +5735,9 @@ result of read command</p>
 
     callback returns a data list:
 
-    [I2C_READ_REPORT, address, register, count of data bytes, data bytes, time-stamp]
+    [report_type, address, register, count of data bytes, data bytes, time-stamp]
+
+    report_type = 9
 
     &#34;&#34;&#34;
     if not callback:
@@ -5713,7 +5763,8 @@ selection is needed)</p>
 <p>:param callback: Required callback function to report i2c data as a
 result of read command</p>
 <p>callback returns a data list:</p>
-<p>[I2C_READ_REPORT, address, register, count of data bytes, data bytes, time-stamp]</p></div>
+<p>[report_type, address, register, count of data bytes, data bytes, time-stamp]</p>
+<p>report_type = 9</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -5739,7 +5790,9 @@ result of read command</p>
 
     callback returns a data list:
 
-    [I2C_READ_REPORT, address, register, count of data bytes, data bytes, time-stamp]
+    [report_type, address, register, count of data bytes, data bytes, time-stamp]
+
+    report_type = 9
 
     &#34;&#34;&#34;
     if not callback:
@@ -5833,8 +5886,8 @@ an integer.</p>
 <p>:param callback: required
 function to report a onewire device address</p>
 <p>callback returns a data list:</p>
-<p>[ONEWIRE_REPORT, ONEWIRE_CRC8, CRC, time-stamp]</p>
-<p>ONEWIRE_REPORT = 14</p>
+<p>[report_id, ONEWIRE_CRC8, CRC, time-stamp]</p>
+<p>report_id = 14</p>
 <p>Onewire report subtype ONEWIRE_CRC8 = 32</p></div>
 <details class="source">
 <summary>
@@ -5850,9 +5903,9 @@ function to report a onewire device address</p>
 
     callback returns a data list:
 
-    [ONEWIRE_REPORT, ONEWIRE_CRC8, CRC, time-stamp]
+    [report_id, ONEWIRE_CRC8, CRC, time-stamp]
 
-    ONEWIRE_REPORT = 14
+    report_id = 14
 
     Onewire report subtype ONEWIRE_CRC8 = 32
 
@@ -5894,8 +5947,8 @@ function to report a onewire device address</p>
 function to report onewire data as a
 result of read command</p>
 <p>callback returns a data list:</p>
-<p>[ONEWIRE_REPORT, ONEWIRE_READ, data byte, time-stamp]</p>
-<p>ONEWIRE_REPORT = 14</p>
+<p>[report_id, ONEWIRE_READ, data byte, time-stamp]</p>
+<p>report_id = 14</p>
 <p>Onewire report subtype ONEWIRE_READ=29</p></div>
 <details class="source">
 <summary>
@@ -5911,9 +5964,9 @@ result of read command</p>
 
     callback returns a data list:
 
-    [ONEWIRE_REPORT, ONEWIRE_READ, data byte, time-stamp]
+    [report_id, ONEWIRE_READ, data byte, time-stamp]
 
-    ONEWIRE_REPORT = 14
+    report_id = 14
 
     Onewire report subtype ONEWIRE_READ=29
 
@@ -5942,12 +5995,12 @@ result of read command</p>
 <p>:param callback: required
 function to report reset result.</p>
 <p>callback returns:</p>
-<p>[ONEWIRE_REPORT, ONEWIRE_RESET, reset result byte,
+<p>[report_type, ONEWIRE_RESET, reset result byte,
 timestamp]</p>
 <p>Result byte: 1 if a device responds with a presence pulse.
 Returns 0 if there
 is no device or the bus is shorted or otherwise held low for more than 250uS</p>
-<p>ONEWIRE_REPORT = 14</p>
+<p>report_type = 14</p>
 <p>Onewire report subtype ONEWIRE_RESET=29</p></div>
 <details class="source">
 <summary>
@@ -5961,13 +6014,13 @@ is no device or the bus is shorted or otherwise held low for more than 250uS</p>
 
     callback returns:
 
-    [ONEWIRE_REPORT, ONEWIRE_RESET, reset result byte,
+    [report_type, ONEWIRE_RESET, reset result byte,
                     timestamp]
 
     Result byte: 1 if a device responds with a presence pulse.  Returns 0 if there
     is no device or the bus is shorted or otherwise held low for more than 250uS
 
-    ONEWIRE_REPORT = 14
+    report_type = 14
 
     Onewire report subtype ONEWIRE_RESET=29
     &#34;&#34;&#34;
@@ -6021,8 +6074,8 @@ to 0xff.</p>
 <p>:param callback: required
 function to report a onewire device address</p>
 <p>callback returns a data list:</p>
-<p>[ONEWIRE_REPORT, ONEWIRE_SEARCH=31, 8 byte address, time-stamp]</p>
-<p>ONEWIRE_REPORT = 14</p>
+<p>[report_id, ONEWIRE_SEARCH=31, 8 byte address, time-stamp]</p>
+<p>report_id = 14</p>
 <p>Onewire report subtype ONEWIRE_SEARCH=31</p></div>
 <details class="source">
 <summary>
@@ -6039,9 +6092,9 @@ function to report a onewire device address</p>
 
     callback returns a data list:
 
-    [ONEWIRE_REPORT, ONEWIRE_SEARCH=31, 8 byte address, time-stamp]
+    [report_id, ONEWIRE_SEARCH=31, 8 byte address, time-stamp]
 
-    ONEWIRE_REPORT = 14
+    report_id = 14
 
     Onewire report subtype ONEWIRE_SEARCH=31
     &#34;&#34;&#34;
@@ -6243,14 +6296,14 @@ another read or write.</p>
 <div class="desc"><p>Set a pin as an analog input.</p>
 <p>:param pin_number: GPIO pin number</p>
 <p>valid pins:</p>
-<pre><code>2, 33, 34, 35, 36, 39
+<pre><code>32, 33, 34, 35, 36, 39
 </code></pre>
 <p>:param differential: difference in previous to current value before
 report will be generated</p>
 <p>:param callback: function</p>
 <p>callback returns a data list:</p>
-<p>[pin_type, pin_number, pin_value, raw_time_stamp]</p>
-<p>The pin_type for analog input pins = 2</p></div>
+<p>[report_type, pin_number, pin_value, raw_time_stamp]</p>
+<p>The report_type for analog input pins = 2</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -6263,7 +6316,7 @@ report will be generated</p>
 
    valid pins:
 
-       2, 33, 34, 35, 36, 39
+       32, 33, 34, 35, 36, 39
 
     :param differential: difference in previous to current value before
                          report will be generated
@@ -6272,9 +6325,9 @@ report will be generated</p>
 
     callback returns a data list:
 
-    [pin_type, pin_number, pin_value, raw_time_stamp]
+    [report_type, pin_number, pin_value, raw_time_stamp]
 
-    The pin_type for analog input pins = 2
+    The report_type for analog input pins = 2
 
     &#34;&#34;&#34;
 
@@ -6290,7 +6343,7 @@ report will be generated</p>
     else:
         if self.shutdown_on_exception:
             self.shutdown()
-        raise RuntimeError(&#39;set_pin_mode_digital_input: Invalid GPIO pin number&#39;)</code></pre>
+        raise RuntimeError(&#39;set_pin_mode_analog_input: Invalid GPIO pin number&#39;)</code></pre>
 </details>
 </dd>
 <dt id="telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32.set_pin_mode_analog_output"><code class="name flex">
@@ -6302,7 +6355,8 @@ to a channel as well as specifying the channel parameters.</p>
 <p>The pwm_attach is done automatically on the server.</p>
 <p>:param pin_number: valid output GPIO pin number</p>
 <p>valid pins:</p>
-<pre><code>4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+<pre><code>2, 4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
+22, 23, 25, 26, 27, 32, 33
 </code></pre>
 <p>:param channel: PWM channel (0 -15)</p>
 <p>:param frequency: floating point signal frequency (10Hz - 300kHz)</p>
@@ -6323,7 +6377,8 @@ to a channel as well as specifying the channel parameters.</p>
 
    valid pins:
 
-       4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+       2, 4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
+       22, 23, 25, 26, 27, 32, 33
 
     :param channel: PWM channel (0 -15)
 
@@ -6350,18 +6405,15 @@ to a channel as well as specifying the channel parameters.</p>
                         self.shutdown()
                     raise RuntimeError(
                         &#34;set_pin_mode_analog_out: Valid resolution range 8 - 16.&#34;)
-
             else:
                 if self.shutdown_on_exception:
                     self.shutdown()
                 raise RuntimeError(
                     &#34;set_pin_mode_analog_out: Valid frequency range 10.0 - 300000.0.&#34;)
-
         else:
             if self.shutdown_on_exception:
                 self.shutdown()
             raise RuntimeError(&#34;set_pin_mode_analog_out: Valid channel range 0-15.&#34;)
-
     else:
         if self.shutdown_on_exception:
             self.shutdown()
@@ -6410,8 +6462,26 @@ value.</p>
 <dd>
 <div class="desc"><p>:param pin_number: connection pin.</p>
 <p>Valid pins:</p>
-<p>4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33</p>
-<p>:param callback: callback function</p></div>
+<pre><code> 4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+</code></pre>
+<p>:param callback: callback function</p>
+<p>callback returns a data list:</p>
+<p>Valid data report:</p>
+<p>[report_type, valid_data=0, pin_number, humidity,
+temperature, time-stamp]</p>
+<p>Errored read report:
+[report_type, valid_data!=0, pin_number, error_value, time-stamp]</p>
+<p>error_value:</p>
+<pre><code>DHTLIB_ERROR_CHECKSUM            -1
+DHTLIB_ERROR_TIMEOUT_A           -2
+DHTLIB_ERROR_BIT_SHIFT           -3
+DHTLIB_ERROR_SENSOR_NOT_READY    -4
+DHTLIB_ERROR_TIMEOUT_C           -5
+DHTLIB_ERROR_TIMEOUT_D           -6
+DHTLIB_ERROR_TIMEOUT_B           -7
+DHTLIB_WAITING_FOR_READ          -8
+</code></pre>
+<p>report_type = 11</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -6423,9 +6493,33 @@ value.</p>
 
     Valid pins:
 
-       4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+         4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
 
     :param callback: callback function
+
+    callback returns a data list:
+
+    Valid data report:
+
+    [report_type, valid_data=0, pin_number, humidity,
+     temperature, time-stamp]
+
+    Errored read report:
+    [report_type, valid_data!=0, pin_number, error_value, time-stamp]
+
+    error_value:
+
+        DHTLIB_ERROR_CHECKSUM            -1
+        DHTLIB_ERROR_TIMEOUT_A           -2
+        DHTLIB_ERROR_BIT_SHIFT           -3
+        DHTLIB_ERROR_SENSOR_NOT_READY    -4
+        DHTLIB_ERROR_TIMEOUT_C           -5
+        DHTLIB_ERROR_TIMEOUT_D           -6
+        DHTLIB_ERROR_TIMEOUT_B           -7
+        DHTLIB_WAITING_FOR_READ          -8
+
+
+    report_type = 11
 
     &#34;&#34;&#34;
 
@@ -6438,7 +6532,6 @@ value.</p>
         if self.dht_count &lt; PrivateConstants.MAX_DHTS - 1:
             self.dht_callbacks[pin_number] = callback
             self.dht_count += 1
-
             command = [PrivateConstants.DHT_NEW, pin_number]
             self._send_command(command)
         else:
@@ -6463,8 +6556,8 @@ value.</p>
 </code></pre>
 <p>:param callback: callback function</p>
 <p>callback returns a data list:</p>
-<p>[pin_type, pin_number, pin_value, raw_time_stamp]</p>
-<p>The pin_type for digital input pins = 2</p></div>
+<p>[report_type, pin_number, pin_value, raw_time_stamp]</p>
+<p>The report_type for digital input pins = 2</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -6483,9 +6576,9 @@ value.</p>
 
     callback returns a data list:
 
-    [pin_type, pin_number, pin_value, raw_time_stamp]
+    [report_type, pin_number, pin_value, raw_time_stamp]
 
-    The pin_type for digital input pins = 2
+    The report_type for digital input pins = 2
 
     &#34;&#34;&#34;
     if pin_number in self.valid_gpio_output_pins:
@@ -6508,8 +6601,8 @@ value.</p>
 </code></pre>
 <p>:param callback: callback function</p>
 <p>callback returns a data list:</p>
-<p>[pin_type, pin_number, pin_value, raw_time_stamp]</p>
-<p>The pin_type for digital input pins with pull_downs enabled = 2</p></div>
+<p>[report_type, pin_number, pin_value, raw_time_stamp]</p>
+<p>The report_type for digital input pins with pull_downs enabled = 2</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -6528,9 +6621,9 @@ value.</p>
 
     callback returns a data list:
 
-    [pin_type, pin_number, pin_value, raw_time_stamp]
+    [report_type, pin_number, pin_value, raw_time_stamp]
 
-    The pin_type for digital input pins with pull_downs enabled = 2
+    The report_type for digital input pins with pull_downs enabled = 2
 
     &#34;&#34;&#34;
     if not callback:
@@ -6557,11 +6650,12 @@ value.</p>
 <div class="desc"><p>Set a pin as a digital input with pullup enabled.</p>
 <p>:param pin_number: GPIO pin number</p>
 <p>Valid pins:</p>
-<p>4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33</p>
+<pre><code> 4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+</code></pre>
 <p>:param callback: callback function</p>
 <p>callback returns a data list:</p>
-<p>[pin_type, pin_number, pin_value, raw_time_stamp]</p>
-<p>The pin_type for digital input pins with pullups enabled = 2</p></div>
+<p>[report_type, pin_number, pin_value, raw_time_stamp]</p>
+<p>The report_type for digital input pins with pullups enabled = 2</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -6574,15 +6668,15 @@ value.</p>
 
     Valid pins:
 
-       4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+         4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
 
     :param callback: callback function
 
     callback returns a data list:
 
-    [pin_type, pin_number, pin_value, raw_time_stamp]
+    [report_type, pin_number, pin_value, raw_time_stamp]
 
-    The pin_type for digital input pins with pullups enabled = 2
+    The report_type for digital input pins with pullups enabled = 2
 
     &#34;&#34;&#34;
     if not callback:
@@ -6690,7 +6784,8 @@ API.</p>
 <div class="desc"><p>Initialize the one wire serial bus.</p>
 <p>:param pin: Data pin connected to the OneWire device.</p>
 <p>Valid pins:</p>
-<p>4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33</p></div>
+<pre><code> 4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+</code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -6703,7 +6798,7 @@ API.</p>
 
     Valid pins:
 
-       4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+         4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
     &#34;&#34;&#34;
     self.onewire_enabled = True
     command = [PrivateConstants.ONE_WIRE_INIT, pin]
@@ -6717,7 +6812,8 @@ API.</p>
 <div class="desc"><p>Attach a pin to a servo motor</p>
 <p>:param pin_number: GPIO pin.</p>
 <p>Valid pins:</p>
-<p>4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33</p>
+<pre><code> 4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+</code></pre>
 <p>:param min_pulse: minimum pulse width</p>
 <p>:param max_pulse: maximum pulse width</p></div>
 <details class="source">
@@ -6733,7 +6829,7 @@ API.</p>
 
     Valid pins:
 
-       4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+         4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
 
 
     :param min_pulse: minimum pulse width
@@ -6758,13 +6854,18 @@ API.</p>
 <span>def <span class="ident">set_pin_mode_sonar</span></span>(<span>self, trigger_pin, echo_pin, callback)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Attach pins to a servo device. Trigger and echo pins must not be the same value.</p>
-<p>:param trigger_pin:</p>
+<div class="desc"><p>Attach pins to a sonar device. Trigger and echo pins must not be the same value.
+Distance is reported in centimeters.</p>
+<p>:param trigger_pin: GPIO trigger pin number</p>
+<p>:param echo_pin:: GPIO echo pin number</p>
 <p>Valid pins:</p>
-<p>4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33</p>
-<p>:param echo_pin:</p>
+<pre><code> 4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+</code></pre>
 <p>:param callback:
-callback</p></div>
+callback function</p>
+<p>callback returns a data list:</p>
+<p>[report_type, trigger_pin, distance_value, time_stamp]</p>
+<p>report_type = 10</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -6772,17 +6873,24 @@ callback</p></div>
 <pre><code class="python">def set_pin_mode_sonar(self, trigger_pin, echo_pin,
                        callback):
     &#34;&#34;&#34;
-    Attach pins to a servo device. Trigger and echo pins must not be the same value.
+    Attach pins to a sonar device. Trigger and echo pins must not be the same value.
+    Distance is reported in centimeters.
 
-    :param trigger_pin:
+    :param trigger_pin: GPIO trigger pin number
+
+    :param echo_pin:: GPIO echo pin number
 
     Valid pins:
 
-       4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
+         4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
 
-    :param echo_pin:
+    :param callback:  callback function
 
-    :param callback:  callback
+    callback returns a data list:
+
+    [report_type, trigger_pin, distance_value, time_stamp]
+
+    report_type = 10
 
     &#34;&#34;&#34;
 
@@ -6893,9 +7001,8 @@ the AccelStepper library for the ESP32.</p>
 <p>Instantiate a stepper motor.</p>
 <p>Initialize the interface and pins for a stepper motor.</p>
 <p>Valid GPIO pin numbers:</p>
-<pre><code>        2, 4, 5, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
-        24, 25, 26, 27, 28., 29, 30, 31, 32, 33, 34, 35, 36,
-        37, 38, 39
+<pre><code>        4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
+        22, 23, 25, 26, 27, 32, 33
 </code></pre>
 <p>:param interface: Motor Interface Type:</p>
 <pre><code>    1 = Stepper Driver, 2 driver pins required
@@ -6937,9 +7044,8 @@ the AccelStepper library for the ESP32.</p>
 
     Valid GPIO pin numbers:
 
-                2, 4, 5, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
-                24, 25, 26, 27, 28., 29, 30, 31, 32, 33, 34, 35, 36,
-                37, 38, 39
+                4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
+                22, 23, 25, 26, 27, 32, 33
 
     :param interface: Motor Interface Type:
 
@@ -7011,13 +7117,14 @@ the AccelStepper library for the ESP32.</p>
 <p>:param pin_number:
 GPIO pin number.</p>
 <p>Valid pins:</p>
-<p>4, 12, 13, 14, 15, 27, 32, 33</p>
+<pre><code> 4, 12, 13, 14, 15, 27, 32, 33
+</code></pre>
 <p>:param differential: difference in previous to current value before
 report will be generated</p>
 <p>:param callback: callback function</p>
 <p>callback returns a data list:</p>
-<p>[pin_type, pin_number, pin_value, raw_time_stamp]</p>
-<p>The pin_type for touch pins = 13</p></div>
+<p>[report_type, pin_number, pin_value, raw_time_stamp]</p>
+<p>The report_type for touch pins = 13</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -7030,7 +7137,7 @@ report will be generated</p>
 
     Valid pins:
 
-       4, 12, 13, 14, 15, 27, 32, 33
+         4, 12, 13, 14, 15, 27, 32, 33
 
     :param differential: difference in previous to current value before
                          report will be generated
@@ -7040,9 +7147,9 @@ report will be generated</p>
 
     callback returns a data list:
 
-    [pin_type, pin_number, pin_value, raw_time_stamp]
+    [report_type, pin_number, pin_value, raw_time_stamp]
 
-    The pin_type for touch pins = 13
+    The report_type for touch pins = 13
 
     &#34;&#34;&#34;
     if pin_number in self.valid_touch_pins:
@@ -7072,19 +7179,15 @@ If any exceptions are thrown, they are ignored.</p></div>
     &#34;&#34;&#34;
     self.shutdown_flag = True
 
-    if not self.transport_is_ble:
-        self._stop_threads()
+    self._stop_threads()
 
     # stop all reporting - both analog and digital
     command = [PrivateConstants.STOP_ALL_REPORTS]
     self._send_command(command)
     if self.restart_on_shutdown:
-        # self.ble_transport.disconnect()
         command = [PrivateConstants.RESET]
         self._send_command(command)
-        time.sleep(.1)
-    if self.the_task:
-        self.the_task.cancel()</code></pre>
+        time.sleep(.1)</code></pre>
 </details>
 </dd>
 <dt id="telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32.spi_cs_control"><code class="name flex">
@@ -7136,8 +7239,8 @@ call the callback function with the reported data.</p>
 <p>:param call_back: Required callback function to report spi data as a
 result of read command</p>
 <p>callback returns a data list:</p>
-<p>[SPI_READ_REPORT, count of data bytes read, data bytes, time-stamp]</p>
-<p>SPI_READ_REPORT = 13</p></div>
+<p>[report_type, count of data bytes read, data bytes, time-stamp]</p>
+<p>report_type = 13</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -7157,9 +7260,9 @@ result of read command</p>
 
     callback returns a data list:
 
-    [SPI_READ_REPORT, count of data bytes read, data bytes, time-stamp]
+    [report_type, count of data bytes read, data bytes, time-stamp]
 
-    SPI_READ_REPORT = 13
+    report_type = 13
 
     &#34;&#34;&#34;
 
@@ -7288,7 +7391,7 @@ be in the form of a list.</p></div>
 <dd>
 <div class="desc"><p>This method may be called directly, if the autostart
 parameter in <strong>init</strong> is set to false.</p>
-<p>This method instantiates the BLE transport interface</p>
+<p>This method instantiates the WI-FI transport</p>
 <p>Use this method if you wish to start manually.</p></div>
 <details class="source">
 <summary>
@@ -7299,47 +7402,35 @@ parameter in <strong>init</strong> is set to false.</p>
     This method may be called directly, if the autostart
     parameter in __init__ is set to false.
 
-    This method instantiates the BLE transport interface
+    This method instantiates the WI-FI transport
 
     Use this method if you wish to start manually.
      &#34;&#34;&#34;
 
-    if self.transport_is_ble:
-        from telemetrix_esp32_common.ble_transport import BleTransport
-        self.transport = BleTransport(receive_callback=self._ble_report_dispatcher,
-                                      is_asyncio=False)
-        self.transport.ble_connect()
-    else:
-        import socket
-        from collections import deque
+    # establish the TCP/IP socket and connect to the ESP32 board
+    self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    self.sock.connect((self.ip_address, self.ip_port))
+    print(f&#39;Successfully connected to: {self.ip_address}:{self.ip_port}&#39;)
 
-        self.the_deque = deque()
+    # start the library threads
+    self.the_reporter_thread.start()
+    self.the_data_receive_thread.start()
+    self._run_threads()
 
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.transport_address, self.ip_port))
-        print(f&#39;Successfully connected to: {self.transport_address}:{self.ip_port}&#39;)
-        # start the socket threads
-        self.the_reporter_thread.start()
-        self.the_data_receive_thread.start()
-        self._run_threads()
+    self._get_firmware_version()
 
-    for i in range(3):
-        self._get_firmware_version()
+    time.sleep(.5)
 
-    time.sleep(1)
-
+    # retrieve the server&#39;s firmware version
     if not self.firmware_version:
         if self.shutdown_on_exception:
             self.shutdown()
         raise RuntimeError(&#39;Could not retrieve server firmware version&#39;)
 
-    if self.transport_is_ble:
-        print(f&#39;Telemetrix4Esp32BLE Firmware Version: {self.firmware_version[0]}&#39;
-              f&#39;.{self.firmware_version[1]}.{self.firmware_version[2]}&#39;)
-    else:
-        print(f&#39;Telemetrix4Esp32WIFI Firmware Version: {self.firmware_version[0]}&#39;
-              f&#39;.{self.firmware_version[1]}.{self.firmware_version[2]}&#39;)
+    print(f&#39;Telemetrix4Esp32WIFI Firmware Version: {self.firmware_version[0]}&#39;
+          f&#39;.{self.firmware_version[1]}.{self.firmware_version[2]}&#39;)
 
+    # enable all reporting by the server
     command = [PrivateConstants.ENABLE_ALL_REPORTS]
 
     self._send_command(command)</code></pre>
