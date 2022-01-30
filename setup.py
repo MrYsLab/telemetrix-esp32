@@ -7,7 +7,7 @@ with open('README.md') as f:
 
 setup(
     name='telemetrix-aio-esp32BLE',
-    packages=['telemetrix_aio_esp32BLE'],
+    packages=['telemetrix_aio_esp32', 'telemetrix_esp32_common', 'telemetrix_esp32'],
     install_requires=['bleak'],
 
     version='1.0',

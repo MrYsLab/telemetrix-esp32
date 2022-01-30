@@ -34,7 +34,7 @@ class TelemetrixAioEsp32:
     """
 
     # noinspection PyPep8,PyPep8
-    def __init__(self, transport_is_ble=True, transport_address=None,
+    def __init__(self, transport_is_wifi=True, transport_address=None,
                  ip_port=31336, autostart=True,
                  loop=None, shutdown_on_exception=True,
                  restart_on_shutdown=True,
@@ -43,9 +43,12 @@ class TelemetrixAioEsp32:
         """
         The "constructor" method.
 
-        :param transport_is_ble: True if BLE or False if WI-FI
+        :param transport_is_wifi: Set to True forWI-FI or False for BLE
 
         :param transport_address: mac address for BLE or IP address for WI-FI
+                                  For BLE, if set to None, address discovery
+                                  will be attempted.
+                                  For
 
         :param ip_port: if using a WI-FI interface, this specifies the IP port number
 
@@ -76,7 +79,7 @@ class TelemetrixAioEsp32:
 
         # save input parameters
 
-        self.transport_is_ble = transport_is_ble
+        self.transport_is_wifi = transport_is_wifi
 
         self.ip_port = ip_port
 
@@ -253,17 +256,19 @@ class TelemetrixAioEsp32:
         an asyncio function.
          """
 
-        if self.transport_is_ble:
-            from telemetrix_esp32_common.ble_transport import BleTransport
-            self.transport = BleTransport(receive_callback=self._ble_report_dispatcher)
-            await self.transport.connect()
-        else:
-            from telemetrix_esp32_common.aio_socket_transport import AioSocketTransport
+        if self.transport_is_wifi:
+            if not self.transport_address:
+                raise RuntimeError('A TCP/IP address must be specified when using '
+                                   'WI-FI.')
+            from aio_socket_transport import AioSocketTransport
 
             self.transport = AioSocketTransport(self.transport_address, self.ip_port,
                                                 self.loop)
             await self.transport.start()
             self.the_task = self.loop.create_task(self._wifi_report_dispatcher())
+        else:
+            self.transport = BleTransportAio(receive_callback=self._ble_report_dispatcher)
+            await self.transport.connect()
 
         await self._get_firmware_version()
 
@@ -272,13 +277,13 @@ class TelemetrixAioEsp32:
                 await self.shutdown()
             raise RuntimeError('Could not retrieve server firmware version')
 
-        if self.transport_is_ble:
-            print(f'Telemetrix4Esp32BLE Firmware Version: {self.firmware_version[0]}'
-                f'.{self.firmware_version[1]}.{self.firmware_version[2]}')
-
-        else:
+        if self.transport_is_wifi:
             print(f'Telemetrix4Esp32WIFI Firmware Version: {self.firmware_version[0]}'
                   f'.{self.firmware_version[1]}.{self.firmware_version[2]}')
+        else:
+            print(f'Telemetrix4Esp32BLE Firmware Version: {self.firmware_version[0]}'
+                  f'.{self.firmware_version[1]}.{self.firmware_version[2]}')
+
         command = [PrivateConstants.ENABLE_ALL_REPORTS]
 
         await self._send_command(command)
@@ -347,7 +352,9 @@ class TelemetrixAioEsp32:
 
         callback returns a data list:
 
-        [I2C_READ_REPORT, address, register, count of data bytes, data bytes, time-stamp]
+        [report_type, address, register, count of data bytes, data bytes, time-stamp]
+
+        report_type = 9
 
         """
         if not callback:
@@ -377,9 +384,11 @@ class TelemetrixAioEsp32:
         :param callback: Required callback function to report i2c data as a
                    result of read command
 
-        callback returns a data list:
+       callback returns a data list:
 
-        [I2C_READ_REPORT, address, register, count of data bytes, data bytes, time-stamp]
+        [report_type, address, register, count of data bytes, data bytes, time-stamp]
+
+        report_type = 9
 
         """
         if not callback:
@@ -513,9 +522,11 @@ class TelemetrixAioEsp32:
 
         callback returns a data list:
 
-        [pin_type, pin_number, pin_value, raw_time_stamp]
+        callback returns a data list:
 
-        The pin_type for analog input pins = 2
+        [report_type, pin_number, pin_value, raw_time_stamp]
+
+        The report_type for analog input pins = 2
 
         """
 
@@ -531,7 +542,7 @@ class TelemetrixAioEsp32:
         else:
             if self.shutdown_on_exception:
                 await self.shutdown()
-            raise RuntimeError('set_pin_mode_digital_input: Invalid GPIO pin number')
+            raise RuntimeError('set_pin_mode_analog_input: Invalid GPIO pin number')
 
     async def set_pin_mode_analog_output(self, pin_number, channel=0, frequency=5000.0,
                                          resolution=8):
@@ -699,9 +710,9 @@ class TelemetrixAioEsp32:
 
         callback returns a data list:
 
-        [pin_type, pin_number, pin_value, raw_time_stamp]
+        [report_type, pin_number, pin_value, raw_time_stamp]
 
-        The pin_type for digital input pins = 2
+        The report_type for digital input pins = 2
 
         """
         if pin_number in self.valid_gpio_output_pins:
@@ -726,9 +737,9 @@ class TelemetrixAioEsp32:
 
         callback returns a data list:
 
-        [pin_type, pin_number, pin_value, raw_time_stamp]
+        [report_type, pin_number, pin_value, raw_time_stamp]
 
-        The pin_type for digital input pins with pull_downs enabled = 2
+        The report_type for digital input pins = 2
 
         """
         if not callback:
@@ -761,9 +772,9 @@ class TelemetrixAioEsp32:
 
         callback returns a data list:
 
-        [pin_type, pin_number, pin_value, raw_time_stamp]
+        [report_type, pin_number, pin_value, raw_time_stamp]
 
-        The pin_type for digital input pins with pullups enabled = 2
+        The report_type for digital input pins = 2
 
         """
         if not callback:
@@ -838,6 +849,30 @@ class TelemetrixAioEsp32:
 
         :param callback: callback function
 
+        callback returns a data list:
+
+        Valid data report:
+
+        [report_type, valid_data=0, pin_number, humidity,
+         temperature, time-stamp]
+
+        Errored read report:
+        [report_type, valid_data!=0, pin_number, error_value, time-stamp]
+
+        error_value:
+
+            DHTLIB_ERROR_CHECKSUM            -1
+            DHTLIB_ERROR_TIMEOUT_A           -2
+            DHTLIB_ERROR_BIT_SHIFT           -3
+            DHTLIB_ERROR_SENSOR_NOT_READY    -4
+            DHTLIB_ERROR_TIMEOUT_C           -5
+            DHTLIB_ERROR_TIMEOUT_D           -6
+            DHTLIB_ERROR_TIMEOUT_B           -7
+            DHTLIB_WAITING_FOR_READ          -8
+
+
+        report_type = 11
+
         """
 
         if not callback:
@@ -895,7 +930,8 @@ class TelemetrixAioEsp32:
     async def set_pin_mode_sonar(self, trigger_pin, echo_pin,
                                  callback):
         """
-        Attach pins to a servo device. Trigger and echo pins must not be the same value.
+        Attach pins to a sonar device. Trigger and echo pins must not be the same value.
+        Distance is reported in centimeters.
 
         :param trigger_pin:
 
@@ -906,6 +942,12 @@ class TelemetrixAioEsp32:
         :param echo_pin:
 
         :param callback:  callback
+
+        callback returns a data list:
+
+        [report_type, trigger_pin, distance_value, time_stamp]
+
+        report_type = 10
 
         """
 
@@ -995,9 +1037,9 @@ class TelemetrixAioEsp32:
 
         callback returns a data list:
 
-        [pin_type, pin_number, pin_value, raw_time_stamp]
+        [report_type, pin_number, pin_value, raw_time_stamp]
 
-        The pin_type for touch pins = 13
+        The report_type for touch pins = 13
 
         """
         if pin_number in self.valid_touch_pins:

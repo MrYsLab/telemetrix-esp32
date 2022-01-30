@@ -1,6 +1,6 @@
 
 """
- Copyright (c) 2020 Alan Yorinks All rights reserved.
+ Copyright (c) 2022 Alan Yorinks All rights reserved.
 
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU AFFERO GENERAL PUBLIC LICENSE
@@ -22,10 +22,10 @@ import sys
 
 
 # noinspection PyStatementEffect,PyUnresolvedReferences,PyUnresolvedReferences
-class AioSocketTransport:
+class SocketAioTransport:
     """
     This class encapsulates management of a tcp/ip connection that communicates
-    with the StandardFirmataWiFi
+    with the Telemetrix4Esp32WiFi server resident on an ESP32 board.
     """
     def __init__(self, ip_address, ip_port, loop):
         self.ip_address = ip_address
@@ -56,7 +56,7 @@ class AioSocketTransport:
         :return: None
         """
         # we need to convert data formats,
-        # so all of the below.
+        # so go through all the steps below.
         output_list = []
 
         # create an array of integers from the data to be sent
