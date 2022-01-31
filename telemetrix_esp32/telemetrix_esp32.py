@@ -36,7 +36,7 @@ class TelemetrixEsp32(threading.Thread):
     """
 
     # noinspection PyPep8,PyPep8
-    def __init__(self, ip_address=None,
+    def __init__(self, transport_address=None,
                  ip_port=31336, autostart=True,
                  shutdown_on_exception=True,
                  restart_on_shutdown=True,
@@ -45,7 +45,7 @@ class TelemetrixEsp32(threading.Thread):
         """
         The "constructor" method.
 
-        :param ip_address: WI-FI IP address assigned to the ESP32 board
+        :param transport_address: WI-FI IP address assigned to the ESP32 board
 
         :param ip_port: Specifies the IP port number
 
@@ -70,7 +70,7 @@ class TelemetrixEsp32(threading.Thread):
                 raise RuntimeError("ERROR: Python 3.7.0 or greater is "
                                    "required for use of this program.")
 
-        if not ip_address:
+        if not transport_address:
             raise RuntimeError("An IP address must be specified.")
 
         # initialize threading parent
@@ -93,7 +93,7 @@ class TelemetrixEsp32(threading.Thread):
 
         # save input parameters
 
-        self.ip_address = ip_address
+        self.transport_address = transport_address
 
         self.ip_port = ip_port
 
@@ -278,8 +278,8 @@ class TelemetrixEsp32(threading.Thread):
 
         # establish the TCP/IP socket and connect to the ESP32 board
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.ip_address, self.ip_port))
-        print(f'Successfully connected to: {self.ip_address}:{self.ip_port}')
+        self.sock.connect((self.transport_address, self.ip_port))
+        print(f'Successfully connected to: {self.transport_address}:{self.ip_port}')
 
         # start the library threads
         self.the_reporter_thread.start()
@@ -2671,9 +2671,9 @@ class TelemetrixEsp32(threading.Thread):
         """
         self.run_event.wait()
 
-        # Start this thread only if ip_address is set
+        # Start this thread only if transport_address is set
 
-        if self.ip_address:
+        if self.transport_address:
 
             while self._is_running() and not self.shutdown_flag:
                 try:

@@ -260,14 +260,15 @@ class TelemetrixAioEsp32:
             if not self.transport_address:
                 raise RuntimeError('A TCP/IP address must be specified when using '
                                    'WI-FI.')
-            from aio_socket_transport import AioSocketTransport
+            from socket_aio_transport import SocketAioTransport
 
-            self.transport = AioSocketTransport(self.transport_address, self.ip_port,
+            self.transport = SocketAioTransport(self.transport_address, self.ip_port,
                                                 self.loop)
             await self.transport.start()
             self.the_task = self.loop.create_task(self._wifi_report_dispatcher())
         else:
-            self.transport = BleTransportAio(receive_callback=self._ble_report_dispatcher)
+            from ble_aio_transport import BleAioTransport
+            self.transport = BleAioTransport(receive_callback=self._ble_report_dispatcher)
             await self.transport.connect()
 
         await self._get_firmware_version()

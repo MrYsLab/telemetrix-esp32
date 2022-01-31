@@ -69,7 +69,7 @@ class BleAioTransport:
         self.client = None
 
         # a variable to keep track if the transport is currently connected
-        self.connected = false
+        self.connected = False
 
     async def notification_handler(self, sender, data):
         """
