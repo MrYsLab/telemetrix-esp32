@@ -1,5 +1,5 @@
 """
- Copyright (c) 2021 Alan Yorinks All rights reserved.
+ Copyright (c) 2022 Alan Yorinks All rights reserved.
 
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU AFFERO GENERAL PUBLIC LICENSE
@@ -28,10 +28,8 @@ TRIGGER_PIN = 16
 ECHO_PIN = 4
 
 # indices into callback data
-REPORT_TYPE = 0
 TRIG_PIN = 1
 DISTANCE = 2
-TIME = 3
 
 
 # A callback function to display the distance
@@ -41,7 +39,7 @@ async def the_callback(data):
     :param data: [report_type = PrivateConstants.SONAR_DISTANCE, trigger pin number, distance, timestamp]
     """
     date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(data[3]))
-    print(f'Sonar Report: Trigger Pin: {data[1]} Distance: {data[2]} Time: {date}')
+    print(f'Sonar Report: Trigger Pin: {data[TRIG_PIN]} Distance: {data[DISTANCE]} Time: {date}')
 
 
 async def sonar(my_board, trigger_pin, echo_pin, callback):
@@ -71,7 +69,7 @@ async def sonar(my_board, trigger_pin, echo_pin, callback):
 loop = asyncio.get_event_loop()
 
 # instantiate pymata_express
-board = telemetrix_aio_esp32.TelemetrixAioEsp32()
+board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_is_wifi=False)
 
 try:
     # start the main function

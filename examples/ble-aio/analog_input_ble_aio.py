@@ -26,17 +26,8 @@ This file demonstrates analog input using both callbacks and
 polling. Time stamps are provided in both "cooked" and raw form
 """
 
-TRIGGER_PIN = 16
-ECHO_PIN = 4
-
-# Setup a pin for analog input and monitor its changes
+# Set up a pin for analog input and monitor its changes
 ANALOG_PIN = 36  # gpio pin number
-
-# Callback data indices
-CB_PIN_MODE = 0
-CB_PIN = 1
-CB_VALUE = 2
-CB_TIME = 3
 
 
 async def the_callback(data):
@@ -45,6 +36,11 @@ async def the_callback(data):
 
     :param data: [pin_mode, pin, current_reported_value,  timestamp]
     """
+
+    # Callback data indices
+    CB_PIN = 1
+    CB_VALUE = 2
+    CB_TIME = 3
 
     formatted_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(data[CB_TIME]))
     print(f'Analog Call Input Callback: pin={data[CB_PIN]}, '
@@ -61,19 +57,19 @@ async def analog_in(my_board, pin):
 
     Also, the differential parameter is being used.
     The callback will only be called when there is
-    difference of 5 or more between the current and
+    difference of 100 or more between the current and
     last value reported.
 
     :param my_board: a pymata_express instance
 
     :param pin: Arduino pin number
     """
-    await my_board.set_pin_mode_analog_input(pin, 5, the_callback)
+    await my_board.set_pin_mode_analog_input(pin, 100, the_callback)
 
     try:
         while True:
             try:
-                await asyncio.sleep(.001)
+                await asyncio.sleep(.01)
             except KeyboardInterrupt:
                 await my_board.shutdown()
                 sys.exit(0)
@@ -87,18 +83,11 @@ async def analog_in(my_board, pin):
 loop = asyncio.get_event_loop()
 
 # instantiate telemetrix
-board = telemetrix_aio_esp32.TelemetrixAioEsp32()
+board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_is_wifi=False)
 
+# start the main function
 try:
-    # start the main function
-    try:
-        loop.run_until_complete(analog_in(board, ANALOG_PIN))
-    except KeyboardInterrupt:
-        loop.run_until_complete(board.shutdown())
-        sys.exit(0)
-    # loop.run_until_complete(sonar(board, TRIGGER_PIN, ECHO_PIN, the_callback))
-    loop.run_until_complete(board.shutdown())
-    sys.exit(0)
-except (KeyboardInterrupt, RuntimeError) as e:
+    loop.run_until_complete(analog_in(board, ANALOG_PIN))
+except KeyboardInterrupt:
     loop.run_until_complete(board.shutdown())
     sys.exit(0)
