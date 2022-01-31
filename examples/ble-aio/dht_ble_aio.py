@@ -59,9 +59,11 @@ async def the_callback(data):
         """
     if data[1]:
         # error message
-        date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(data[4]))
-        print(f'DHT Error Report:'
-              f'Pin: {data[2]} Error: {data[1]}  Time: {date}')
+        # date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(data[4]))
+        # print(f'DHT Error Report:'
+        #       f'Pin: {data[2]} Error: {data[1]}  Time: {date}')
+        # ignore the errors
+        pass
     else:
         date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(data[5]))
         print(f'DHT Valid Data Report:'
