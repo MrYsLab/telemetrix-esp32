@@ -52,7 +52,7 @@ async def blink(my_board, pin):
 # get the event loop
 loop = asyncio.get_event_loop()
 
-# instantiate pymata_express
+# instantiate telemetrix
 board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_is_wifi=False)
 
 try:

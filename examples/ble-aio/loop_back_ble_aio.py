@@ -53,7 +53,7 @@ async def loop_back(my_board, loop_back_data):
 # get the event loop
 loop = asyncio.get_event_loop()
 
-# instantiate pymata_express
+# instantiate telemetrix
 board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_is_wifi=False)
 
 char_list = ['A', 'B', 'Z']

@@ -60,9 +60,9 @@ async def analog_in(my_board, pin):
     difference of 100 or more between the current and
     last value reported.
 
-    :param my_board: a pymata_express instance
+    :param my_board: a telemetrix instance
 
-    :param pin: Arduino pin number
+    :param pin: GPIO pin number
     """
     await my_board.set_pin_mode_analog_input(pin, 100, the_callback)
 
