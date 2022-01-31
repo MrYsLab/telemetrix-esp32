@@ -49,7 +49,7 @@ async def sonar(my_board, trigger_pin, echo_pin, callback):
     Set the pin mode for a sonar device. Results will appear via the
     callback.
 
-    :param my_board: an pymata express instance
+    :param my_board: a telemetrix instance
     :param trigger_pin: GPIO pin number
     :param echo_pin: GPIO pin number
     :param callback: The callback function
@@ -70,8 +70,7 @@ async def sonar(my_board, trigger_pin, echo_pin, callback):
 loop = asyncio.get_event_loop()
 
 # instantiate pymata_express
-board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_is_ble=False,
-                                         transport_address='192.168.2.232')
+board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_address='192.168.2.232')
 
 try:
     # start the main function
@@ -79,5 +78,4 @@ try:
 except KeyboardInterrupt:
     loop.run_until_complete(board.shutdown())
     sys.exit(0)
-
 
