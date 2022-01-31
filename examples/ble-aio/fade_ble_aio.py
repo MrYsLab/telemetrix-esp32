@@ -70,7 +70,6 @@ the_board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_is_wifi=False)
 try:
     # start the main function
     loop.run_until_complete(fade(the_board, DIGITAL_PIN))
-
     loop.run_until_complete(the_board.shutdown())
 except KeyboardInterrupt:
     loop.run_until_complete(the_board.shutdown())
