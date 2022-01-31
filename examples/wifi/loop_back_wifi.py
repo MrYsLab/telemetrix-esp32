@@ -53,7 +53,7 @@ def loop_back(my_board, loop_back_data):
         sys.exit(0)
 
 
-# instantiate pymata_express
+# instantiate telemetrix
 board = telemetrix_esp32.TelemetrixEsp32(transport_address='192.168.2.232')
 
 char_list = ['A', 'B', 'Z']

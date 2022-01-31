@@ -48,7 +48,7 @@ def sonar(my_board, trigger_pin, echo_pin, callback):
     Set the pin mode for a sonar device. Results will appear via the
     callback.
 
-    :param my_board: an pymata express instance
+    :param my_board: a telemetrix express instance
     :param trigger_pin: GPIO pin number
     :param echo_pin: GPIO pin number
     :param callback: The callback function
@@ -67,14 +67,9 @@ def sonar(my_board, trigger_pin, echo_pin, callback):
             sys.exit(0)
 
 
-board = telemetrix_esp32.TelemetrixEsp32(transport_is_ble=False,
-                                         transport_address='192.168.2.232')
+board = telemetrix_esp32.TelemetrixEsp32(transport_address='192.168.2.232')
 try:
     sonar(board, TRIGGER_PIN, ECHO_PIN, the_callback)
-    while True:
-        time.sleep(2)
-    board.shutdown()
-    sys.exit(0)
 except (KeyboardInterrupt, RuntimeError):
     board.shutdown()
     sys.exit(0)

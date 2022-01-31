@@ -69,7 +69,7 @@ async def sonar(my_board, trigger_pin, echo_pin, callback):
 # get the event loop
 loop = asyncio.get_event_loop()
 
-# instantiate pymata_express
+# instantiate telemetrix
 board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_address='192.168.2.232')
 
 try:
@@ -78,4 +78,3 @@ try:
 except KeyboardInterrupt:
     loop.run_until_complete(board.shutdown())
     sys.exit(0)
-
