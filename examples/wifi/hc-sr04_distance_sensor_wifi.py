@@ -23,6 +23,10 @@ from telemetrix_esp32 import telemetrix_esp32
 This program continuously monitors an HC-SR04 Ultrasonic Sensor
 It reports changes to the distance sensed.
 """
+
+# IP address assigned to the ESP32
+IP_ADDRESS = '192.168.2.232'
+
 TRIGGER_PIN = 16
 ECHO_PIN = 4
 
@@ -67,7 +71,7 @@ def sonar(my_board, trigger_pin, echo_pin, callback):
             sys.exit(0)
 
 
-board = telemetrix_esp32.TelemetrixEsp32(transport_address='192.168.2.232')
+board = telemetrix_esp32.TelemetrixEsp32(transport_address=IP_ADDRESS)
 try:
     sonar(board, TRIGGER_PIN, ECHO_PIN, the_callback)
 except (KeyboardInterrupt, RuntimeError):

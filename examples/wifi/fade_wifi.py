@@ -28,6 +28,9 @@ Setup a pin for output and fade its intensity
 """
 
 # some globals
+# IP address assigned to the ESP32
+IP_ADDRESS = '192.168.2.232'
+
 # make sure to select a PWM pin
 DIGITAL_PIN = 2
 CHANNEL = 0
@@ -65,7 +68,7 @@ def fade(board, pin):
 
 
 # instantiate telemetrix
-the_board = telemetrix_esp32.TelemetrixEsp32(transport_address='192.168.2.232')
+the_board = telemetrix_esp32.TelemetrixEsp32(transport_address=IP_ADDRESS)
 
 try:
     # start the main function

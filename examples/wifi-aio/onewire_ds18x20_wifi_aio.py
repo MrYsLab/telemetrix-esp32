@@ -20,6 +20,9 @@ This example demonstrates OneWire operations by reading a
 DS18B20 or DS1822 temperature sensor.
 """
 
+# IP address assigned to the ESP32
+IP_ADDRESS = '192.168.2.232'
+
 # GPIO pin attached to OneWire signal
 ONE_WIRE_PIN = 23
 
@@ -226,7 +229,7 @@ async def onewire_example(the_board, data_pin):
 loop = asyncio.get_event_loop()
 
 # instantiate telemetrix
-board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_address='192.168.2.232')
+board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_address=IP_ADDRESS)
 
 try:
     # start the main function

@@ -24,6 +24,9 @@ Loopback some data to assure that data can be sent and received between
 the Telemetrix client and Telemetrix server.
 """
 
+# IP address assigned to the ESP32
+IP_ADDRESS = '192.168.2.232'
+
 
 def the_callback(data):
     """
@@ -54,7 +57,7 @@ def loop_back(my_board, loop_back_data):
 
 
 # instantiate telemetrix
-board = telemetrix_esp32.TelemetrixEsp32(transport_address='192.168.2.232')
+board = telemetrix_esp32.TelemetrixEsp32(transport_address=IP_ADDRESS)
 
 char_list = ['A', 'B', 'Z']
 

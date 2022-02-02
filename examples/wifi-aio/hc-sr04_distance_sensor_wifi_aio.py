@@ -24,6 +24,9 @@ from telemetrix_aio_esp32 import telemetrix_aio_esp32
 This program continuously monitors an HC-SR04 Ultrasonic Sensor
 It reports changes to the distance sensed.
 """
+# IP address assigned to the ESP32
+IP_ADDRESS = '192.168.2.232'
+
 TRIGGER_PIN = 16
 ECHO_PIN = 4
 
@@ -70,7 +73,7 @@ async def sonar(my_board, trigger_pin, echo_pin, callback):
 loop = asyncio.get_event_loop()
 
 # instantiate telemetrix
-board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_address='192.168.2.232')
+board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_address=IP_ADDRESS)
 
 try:
     # start the main function

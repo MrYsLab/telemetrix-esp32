@@ -24,6 +24,15 @@ from telemetrix_esp32 import telemetrix_esp32
 This program monitors a DHT 11 humidity/temperature sensor
 """
 
+# IP address assigned to the ESP32
+IP_ADDRESS = '192.168.2.232'
+
+DHT_PIN = 13  # GPIO pin
+
+
+# A callback function to display the distance
+# noinspection GrazieInspection
+
 # indices into callback data for valid data
 # REPORT_TYPE = 0
 # READ_RESULT = 1
@@ -41,11 +50,7 @@ This program monitors a DHT 11 humidity/temperature sensor
 # TEMPERATURE = 4
 # TIME = 5
 
-DHT_PIN = 13  # GPIO pin
 
-
-# A callback function to display the distance
-# noinspection GrazieInspection
 def the_callback(data):
     # noinspection GrazieInspection
     """
@@ -95,7 +100,7 @@ def dht(my_board, pin):
 
 
 # instantiate telemetrix
-board = telemetrix_esp32.TelemetrixEsp32(transport_address='192.168.2.232')
+board = telemetrix_esp32.TelemetrixEsp32(transport_address=IP_ADDRESS)
 try:
     dht(board, DHT_PIN)
 except KeyboardInterrupt:

@@ -31,6 +31,9 @@ Monitor a digital input pin
 Setup a pin for digital input and monitor its changes
 """
 
+# IP address assigned to the ESP32
+IP_ADDRESS = '192.168.2.232'
+
 # Set up a pin for analog input and monitor its changes
 DIGITAL_PIN = 23  # GPIO pin number
 
@@ -85,7 +88,7 @@ def digital_in(my_board, pin):
 
 
 # instantiate telemetrix
-board = telemetrix_esp32.TelemetrixEsp32(transport_address='192.168.2.232')
+board = telemetrix_esp32.TelemetrixEsp32(transport_address=IP_ADDRESS)
 
 try:
     # start the main function

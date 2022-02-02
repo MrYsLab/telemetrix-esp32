@@ -15,7 +15,6 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
-import asyncio
 import sys
 import time
 
@@ -25,6 +24,9 @@ from telemetrix_esp32 import telemetrix_esp32
 This file demonstrates analog input using both callbacks and
 polling. Time stamps are provided in both "cooked" and raw form
 """
+
+# IP address assigned to the ESP32
+IP_ADDRESS = '192.168.2.232'
 
 # Set up a pin for analog input and monitor its changes
 ANALOG_PIN = 36  # gpio pin number
@@ -77,5 +79,5 @@ def analog_in(my_board, pin):
         sys.exit(0)
 
 
-the_board = telemetrix_esp32.TelemetrixEsp32(transport_address='192.168.2.232')
+the_board = telemetrix_esp32.TelemetrixEsp32(transport_address=IP_ADDRESS)
 analog_in(the_board, ANALOG_PIN)

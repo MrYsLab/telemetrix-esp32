@@ -23,6 +23,8 @@ from telemetrix_aio_esp32 import telemetrix_aio_esp32
 Setup a pin for digital output and output a signal
 and toggle the pin. Do this 4 times.
 """
+# IP address assigned to the ESP32
+IP_ADDRESS = '192.168.2.232'
 
 # some globals
 DIGITAL_PIN = 2  # gpio pin number
@@ -53,7 +55,7 @@ async def blink(my_board, pin):
 loop = asyncio.get_event_loop()
 
 # instantiate telemetrix
-board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_address='192.168.2.232')
+board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_address=IP_ADDRESS)
 
 try:
     # start the main function

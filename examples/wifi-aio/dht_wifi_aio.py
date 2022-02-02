@@ -25,6 +25,13 @@ from telemetrix_aio_esp32 import telemetrix_aio_esp32
 This program monitors a DHT 11 humidity/temperature sensor
 """
 
+# IP address assigned to the ESP32
+IP_ADDRESS = '192.168.2.232'
+
+DHT_PIN = 13  # GPIO pin
+
+
+# A callback function to display the distance
 # indices into callback data for valid data
 # REPORT_TYPE = 0
 # READ_RESULT = 1
@@ -41,11 +48,6 @@ This program monitors a DHT 11 humidity/temperature sensor
 # HUMIDITY = 3
 # TEMPERATURE = 4
 # TIME = 5
-
-DHT_PIN = 13  # GPIO pin
-
-
-# A callback function to display the distance
 # noinspection GrazieInspection
 async def the_callback(data):
     # noinspection GrazieInspection
@@ -99,7 +101,7 @@ async def dht(my_board, pin):
 loop = asyncio.get_event_loop()
 
 # instantiate telemetrix
-board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_address='192.168.2.232')
+board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_address=IP_ADDRESS)
 try:
     loop.run_until_complete(dht(board, DHT_PIN))
     loop.run_until_complete(board.shutdown())

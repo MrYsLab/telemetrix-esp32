@@ -26,6 +26,9 @@ This file demonstrates analog input using both callbacks and
 polling. Time stamps are provided in both "cooked" and raw form
 """
 
+# IP address assigned to the ESP32
+IP_ADDRESS = '192.168.2.232'
+
 # Set up a pin for analog input and monitor its changes
 ANALOG_PIN = 36  # gpio pin number
 
@@ -83,7 +86,7 @@ async def analog_in(my_board, pin):
 loop = asyncio.get_event_loop()
 
 # instantiate telemetrix
-board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_address='192.168.2.232')
+board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_address=IP_ADDRESS)
 
 # start the main function
 try:

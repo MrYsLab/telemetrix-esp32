@@ -27,11 +27,13 @@ Setup a pin for digital output
 and toggle the pin 5 times.
 """
 
-# some globals
+# IP address assigned to the ESP32
+IP_ADDRESS = '192.168.2.232'
+
 DIGITAL_PIN = 2  # the board LED
 
 # Create a Telemetrix instance.
-board = telemetrix_esp32.TelemetrixEsp32(transport_address='192.168.2.232')
+board = telemetrix_esp32.TelemetrixEsp32(transport_address=IP_ADDRESS)
 
 # Set the DIGITAL_PIN as an output pin
 board.set_pin_mode_digital_output(DIGITAL_PIN)
