@@ -19,6 +19,8 @@ import asyncio
 import struct
 import sys
 import time
+from telemetrix_aio_esp32.socket_aio_transport import SocketAioTransport
+from telemetrix_aio_esp32.ble_aio_transport import BleAioTransport
 
 # noinspection PyUnresolvedReferences
 from telemetrix_esp32_common.private_constants import PrivateConstants
@@ -263,14 +265,12 @@ class TelemetrixAioEsp32:
             if not self.transport_address:
                 raise RuntimeError('A TCP/IP address must be specified when using '
                                    'WI-FI.')
-            from socket_aio_transport import SocketAioTransport
 
             self.transport = SocketAioTransport(self.transport_address, self.ip_port,
                                                 self.loop)
             await self.transport.start()
             self.the_task = self.loop.create_task(self._wifi_report_dispatcher())
         else:
-            from ble_aio_transport import BleAioTransport
             self.transport = BleAioTransport(receive_callback=self._ble_report_dispatcher)
             await self.transport.connect()
 
