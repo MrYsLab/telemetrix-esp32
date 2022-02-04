@@ -198,6 +198,9 @@ class TelemetrixAioEsp32:
             {PrivateConstants.SPI_REPORT: self._spi_report})
 
         # valid pin numbers
+        # based on:
+        #    https://www.youtube.com/watch?v=LY-1DHTxRAk
+
         self.valid_gpio_input_pins = [4, 5, 12, 13, 14, 16, 17, 18, 19, 21,
                                       22, 23, 25, 26, 27, 32, 33]
 
@@ -307,7 +310,7 @@ class TelemetrixAioEsp32:
         command = [PrivateConstants.GET_FIRMWARE_VERSION]
         await self._send_command(command)
         # provide time for the reply
-        await asyncio.sleep(.2)
+        await asyncio.sleep(.4)
 
     async def analog_write(self, channel, value):
         """
@@ -716,7 +719,7 @@ class TelemetrixAioEsp32:
         The report_type for digital input pins = 2
 
         """
-        if pin_number in self.valid_gpio_output_pins:
+        if pin_number in self.valid_gpio_input_pins:
             await self._set_pin_mode(pin_number, PrivateConstants.AT_INPUT,
                                      differential=0, callback=callback)
         else:
@@ -2289,7 +2292,6 @@ class TelemetrixAioEsp32:
                 packet_length = ord(await self.transport.read())
             except TypeError:
                 continue
-
             # get the rest of the packet
             packet = list(await self.transport.read(packet_length))
 
@@ -2298,7 +2300,7 @@ class TelemetrixAioEsp32:
             # handle all other messages by looking them up in the
             # command dictionary
 
-            # await self.report_dispatch[report](packet[1:])
+            # print(f'packet: {packet[1:]}')
             await self.report_dispatch[report](packet[1:])
 
     '''
