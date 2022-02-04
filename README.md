@@ -34,10 +34,10 @@ threaded environment, then choose this [telemetrix-esp32 API]().
 If you prefer to work in an asyncio environment, then choose the [telemetrix-aio-esp32 
 API]().
 
-The [BLE API]() only supports asyncio only. This is due to the limitations of the 
+The [BLE API]()  supports asyncio only. This is due to the limitations of the 
 available Python BLE libraries.
 
-A [User's Guide](https://mryslab.github.io/telemetrix/) explaining installation and use is available online.
+A [User's Guide]() explaining installation and use is available online.
 
 
 
