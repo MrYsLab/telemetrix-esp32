@@ -79,7 +79,7 @@ class TelemetrixEsp32(threading.Thread):
     &#34;&#34;&#34;
 
     # noinspection PyPep8,PyPep8
-    def __init__(self, ip_address=None,
+    def __init__(self, transport_address=None,
                  ip_port=31336, autostart=True,
                  shutdown_on_exception=True,
                  restart_on_shutdown=True,
@@ -88,7 +88,7 @@ class TelemetrixEsp32(threading.Thread):
         &#34;&#34;&#34;
         The &#34;constructor&#34; method.
 
-        :param ip_address: WI-FI IP address assigned to the ESP32 board
+        :param transport_address: WI-FI IP address assigned to the ESP32 board
 
         :param ip_port: Specifies the IP port number
 
@@ -113,7 +113,7 @@ class TelemetrixEsp32(threading.Thread):
                 raise RuntimeError(&#34;ERROR: Python 3.7.0 or greater is &#34;
                                    &#34;required for use of this program.&#34;)
 
-        if not ip_address:
+        if not transport_address:
             raise RuntimeError(&#34;An IP address must be specified.&#34;)
 
         # initialize threading parent
@@ -136,7 +136,7 @@ class TelemetrixEsp32(threading.Thread):
 
         # save input parameters
 
-        self.ip_address = ip_address
+        self.transport_address = transport_address
 
         self.ip_port = ip_port
 
@@ -321,8 +321,8 @@ class TelemetrixEsp32(threading.Thread):
 
         # establish the TCP/IP socket and connect to the ESP32 board
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.ip_address, self.ip_port))
-        print(f&#39;Successfully connected to: {self.ip_address}:{self.ip_port}&#39;)
+        self.sock.connect((self.transport_address, self.ip_port))
+        print(f&#39;Successfully connected to: {self.transport_address}:{self.ip_port}&#39;)
 
         # start the library threads
         self.the_reporter_thread.start()
@@ -2714,9 +2714,9 @@ class TelemetrixEsp32(threading.Thread):
         &#34;&#34;&#34;
         self.run_event.wait()
 
-        # Start this thread only if ip_address is set
+        # Start this thread only if transport_address is set
 
-        if self.ip_address:
+        if self.transport_address:
 
             while self._is_running() and not self.shutdown_flag:
                 try:
@@ -2739,7 +2739,7 @@ class TelemetrixEsp32(threading.Thread):
 <dl>
 <dt id="telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32"><code class="flex name class">
 <span>class <span class="ident">TelemetrixEsp32</span></span>
-<span>(</span><span>ip_address=None, ip_port=31336, autostart=True, shutdown_on_exception=True, restart_on_shutdown=True)</span>
+<span>(</span><span>transport_address=None, ip_port=31336, autostart=True, shutdown_on_exception=True, restart_on_shutdown=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This class exposes and implements the TelemetrixAIO API for the ESP32 using
@@ -2747,7 +2747,7 @@ a WI-FI transport.
 It includes the public API methods as well as
 a set of private methods. </p>
 <p>The "constructor" method.</p>
-<p>:param ip_address: WI-FI IP address assigned to the ESP32 board</p>
+<p>:param transport_address: WI-FI IP address assigned to the ESP32 board</p>
 <p>:param ip_port: Specifies the IP port number</p>
 <p>:param autostart: If you wish to call the start method within
 your application, then set this to False.</p>
@@ -2769,7 +2769,7 @@ receiving a KeyboardInterrupt exception</p>
     &#34;&#34;&#34;
 
     # noinspection PyPep8,PyPep8
-    def __init__(self, ip_address=None,
+    def __init__(self, transport_address=None,
                  ip_port=31336, autostart=True,
                  shutdown_on_exception=True,
                  restart_on_shutdown=True,
@@ -2778,7 +2778,7 @@ receiving a KeyboardInterrupt exception</p>
         &#34;&#34;&#34;
         The &#34;constructor&#34; method.
 
-        :param ip_address: WI-FI IP address assigned to the ESP32 board
+        :param transport_address: WI-FI IP address assigned to the ESP32 board
 
         :param ip_port: Specifies the IP port number
 
@@ -2803,7 +2803,7 @@ receiving a KeyboardInterrupt exception</p>
                 raise RuntimeError(&#34;ERROR: Python 3.7.0 or greater is &#34;
                                    &#34;required for use of this program.&#34;)
 
-        if not ip_address:
+        if not transport_address:
             raise RuntimeError(&#34;An IP address must be specified.&#34;)
 
         # initialize threading parent
@@ -2826,7 +2826,7 @@ receiving a KeyboardInterrupt exception</p>
 
         # save input parameters
 
-        self.ip_address = ip_address
+        self.transport_address = transport_address
 
         self.ip_port = ip_port
 
@@ -3011,8 +3011,8 @@ receiving a KeyboardInterrupt exception</p>
 
         # establish the TCP/IP socket and connect to the ESP32 board
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.ip_address, self.ip_port))
-        print(f&#39;Successfully connected to: {self.ip_address}:{self.ip_port}&#39;)
+        self.sock.connect((self.transport_address, self.ip_port))
+        print(f&#39;Successfully connected to: {self.transport_address}:{self.ip_port}&#39;)
 
         # start the library threads
         self.the_reporter_thread.start()
@@ -5404,9 +5404,9 @@ receiving a KeyboardInterrupt exception</p>
         &#34;&#34;&#34;
         self.run_event.wait()
 
-        # Start this thread only if ip_address is set
+        # Start this thread only if transport_address is set
 
-        if self.ip_address:
+        if self.transport_address:
 
             while self._is_running() and not self.shutdown_flag:
                 try:
@@ -7409,8 +7409,8 @@ parameter in <strong>init</strong> is set to false.</p>
 
     # establish the TCP/IP socket and connect to the ESP32 board
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.sock.connect((self.ip_address, self.ip_port))
-    print(f&#39;Successfully connected to: {self.ip_address}:{self.ip_port}&#39;)
+    self.sock.connect((self.transport_address, self.ip_port))
+    print(f&#39;Successfully connected to: {self.transport_address}:{self.ip_port}&#39;)
 
     # start the library threads
     self.the_reporter_thread.start()
