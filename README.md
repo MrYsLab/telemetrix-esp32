@@ -1,5 +1,7 @@
 # Telemetrix For The ESP32
 
+# UNDER CONSTRUCTION
+
 The Telemetrix Project is a modern-day replacement for 
 StandardFirmata and comes equipped with many more built-in features than 
 StandardFirmata. 
