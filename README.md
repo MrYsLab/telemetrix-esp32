@@ -4,7 +4,7 @@
 # UNDER CONSTRUCTION
 
 Telemetrix for ESP32 allows you to control and monitor ESP32 devices 
-remotely, using Python on your PC. It supports both WI-FI and Bluetooth Low Energy (BLE)
+remotely using Python on your PC. It supports both WI-FI and Bluetooth Low Energy (BLE)
 transports.
 
 It supports the following features:
@@ -30,9 +30,9 @@ It supports the following features:
 * Integrated Client/Server Debugging Aids Are Included
 
 
-A full set of examples is included:
+A full set of examples is included (scroll horizontally to see the full list):
 
-| Feature                           | Feature Type              | WI-FI Example                                                                                                                                | WI-FI Asyncio Example                                                                                                                                    | BLE Asyncio Feature                                                                                                                                   |
+| Feature                           | Feature Type              | WI-FI ExampleS                                                                                                                               | WI-FI Asyncio Examples                                                                                                                                   | BLE Asyncio Examples                                                                                                                                  |
 |-----------------------------------|---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Analog Input                      | GPIO                      | [analog_input_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/analog_input_wifi.py)                           | [analog_input_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/analog_input_wifi_aio.py)                           | [analog_input_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/analog_input_ble_aio.py)                           |
 | Analog Output (PWM)               | GPIO                      | [fade_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/fade_wifi.py)                                           | [fade_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/fade_wifi_aio.py)                                           | [fade_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/fade_ble_aio.py)                                           |
