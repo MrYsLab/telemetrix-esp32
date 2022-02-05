@@ -5,9 +5,11 @@
 
 Telemetrix for ESP32 allows you to control and monitor ESP32 devices 
 remotely using Python on your PC. It supports both WI-FI and Bluetooth Low Energy (BLE)
-transports.
+transports. 
 
-It supports the following features:
+Input data is reported via callbacks for fast and efficient data notifications.
+
+The Python clients support the following features:
 
 * Analog Input           
 * Analog Output (PWM)  
