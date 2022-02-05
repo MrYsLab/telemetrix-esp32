@@ -2,40 +2,55 @@
 
 # UNDER CONSTRUCTION
 
-The Telemetrix Project is a modern-day replacement for 
-StandardFirmata and comes equipped with many more built-in features than 
-StandardFirmata. 
+The Telemetrix for the ESP32 project allows you to control and monitor a ESP32 devices 
+remotely, using Python on your PC. It supports both WI-FI and Bluetooth Low Energy (BLE)
+transports.
 
-Here is a feature comparison between Telemetrix and StandardFirmata:
+It supports the following features:
 
-| Feature | Telemetrix | StandardFirmata |
-|-------|:----------:|:-----------------:|
-|     Analog Input    |       X     |      X           |
-|     Analog Output (PWM)    |       X     |      X           |
-|     Digital Input    |       X     |      X           |
-|     Digital Output    |       X     |      X           |
-|     i2c Primitives  |       X     |      X           |
-|     Servo Motor Control  |       X     |      X           |
-|     DHT Temperature/Humidity Sensor  |       X     |                 |
-|     OneWire Primitives |       X     |                 |
-|     HC-SR04 Sonar Distance Sensor  |       X     |                 |
-|     SPI Primitives  |       X     |                 |
-|     Stepper Motor Control (AccelStepper) |       X     |                 |
-|    Python Threaded Client Included  |       X     |      
-|    Python Asyncio Client Included  |       X     |
-|    Designed To Be User Extensible |       X     |                 |
-|    Integrated Debugging Aids Provided |       X     |                 |
-|    Examples For All Features |       X     |                 |
+ * Analog Input           
+ * Analog Output (PWM)  
+ * Analog Output (DAC)  
+ * Digital Input          
+ * Digital Output         
+ * ESP32 Touch Pin Input  
+ * i2c Primitives   
+ * OneWire Primitives   
+ * SPI Primitives     
+ * DHT Temperature/Humidity Sensor Support  
+ * HC-SR04 Sonar Distance Sensor Support   
+ * Servo Motor Control   
+ * Stepper Motor Control (AccelStepper) 
+ * Both WI-FI and BLE Transports Supported
+ * Available Online Client APIs:
+   * [WI-FI Threaded Model](https://htmlpreview.github.io/?https://github.com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_esp32/index.html)
+   * [WI-FI And BLE Asyncio Model](https://htmlpreview.github.io/?https://github.com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_aio_esp32/index.html)
+ * The Code Is Designed To Be User Extensible
+ * Integrated Client/Server Debugging Aids Are Included
+ 
 
-This project consists of three python clients, two for WI-FI and one for BLE. 
+A full set of examples is included:
 
-With WI-FI, you may choose between two APIs. For a "standard" Python
-threaded environment, then choose this [telemetrix-esp32 API]().
-If you prefer to work in an asyncio environment, then choose the [telemetrix-aio-esp32 
-API]().
-
-The [BLE API]()  supports asyncio only. This is due to the limitations of the 
-available Python BLE libraries.
+| Feature                           | Feature Type              | WI-FI Example                                                                                                                                | WI-FI Asyncio Example                                                                                                                                    | BLE Asyncio Feature                                                                                                                                   |
+|-----------------------------------|---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Analog Input                      | GPIO                      | [analog_input_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/analog_input_wifi.py)                           | [analog_input_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/analog_input_wifi_aio.py)                           | [analog_input_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/analog_input_ble_aio.py)                           |
+| Analog Output (PWM)               | GPIO                      | [fade_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/fade_wifi.py)                                           | [fade_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/fade_wifi_aio.py)                                           | [fade_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/fade_ble_aio.py)                                           |
+| Analog Output (DAC)               | GPIO                      | [dac_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/dac_wifi.py)                                             | [dac_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/dac_wifi_aio.py)                                             | [dac_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/dac_ble.py)                                                 |
+| Digital Input                     | GPIO                      | [digital_input_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/digital_input_wifi.py)                         | [digital_input_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/digital_input_wifi_aio.py)                         | [digital_input_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/digital_input_ble.py)                             |
+| Digital Input Pull Down           | GPIO                      | [digital_input_pulldown_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/digital_input_pulldown_wifi.py)       | [digital_input_pulldown_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/digital_input_pulldown_wifi_aio.py)       | [digital_input_pulldown_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/digital_input_pulldown_ble.py)           |
+| Digital Input Pull Up             | GPIO                      | [digital_input_pullup_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/digital_input_pullup_wifi.py)           | [digital_input_pullup_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/digital_input_pullup_wifi_aio.py)           | [digital_input_pullup_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/digital_input_pullup_ble.py)               |
+| Digital Output                    | GPIO                      | [blink_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/blink_wifi.py)                                         | [blink_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/blink_wifi_aio.py)                                         | [blink_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/blink_ble_aio.py)                                         |
+| Touch Pin Input                   | GPIO                      | [touch_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/touch_input_wifi.py)                                   | [touch_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/touch_input_wifi_aio.py)                                   | [touch_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/touch_input_ble_aio.py)                                   |
+| i2c (ADXL345 Accelerometer)       | Device Communications Bus | [i2c_adxl345_accelerometer_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/i2c_adxl345_accelerometer_wifi.py) | [i2c_adxl345_accelerometer_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/i2c_adxl345_accelerometer_wifi_aio.py) | [i2c_adxl345_accelerometer_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/i2c_adxl345_accelerometer_ble_aio.py) |
+| OneWire (DS18x20 Thermometer)     | Device Communications Bus | [onewire_ds18x20_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/onewire_ds18x20_wifi.py)                     | [onewire_ds18x20_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/onewire_ds18x20_wifi_aio.py)                     | [onewire_ds18x20_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/onewire_ds18x20_ble_aio.py)                     |
+| SPI (MPU9250 Accelerometer)       | Device Communications Bus | [spi_mpu9250_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/spi_mpu9250_wifi.py)                             | [spi_mpu9250_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/spi_mpu9250_wifi_aio.py)                             | [spi_mpu9250_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/spi_mpu9250_ble_aio.py)                             |
+| DHT Temperature/Humidity Sensor   | Sensor Device Support     | [dht_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/dht_wifi.py)                                             | [dht_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/dht_wifi_aio.py)                                             | [dht_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/dht_ble_aio.py)                                             |
+| HC-SR04 Sonar Distance Sensor     | Sensor Device Support     | [hc-sr04_distance_sensor_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/hc-sr04_distance_sensor_wifi.py)     | [hc-sr04_distance_sensor_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/hc-sr04_distance_sensor_wifi_aio.py)     | [hc-sr04_distance_sensor_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/hc-sr04_distance_sensor_ble_aio.py)     |
+| Servo Motor                       | Motor Control             | [servo_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/servo_wifi.py)                                         | [servo_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/servo_wifi_aio.py)                                         | [servo_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/servo_ble_aio.py)                                         |
+| Stepper Motor (Absolute Position) | Motor Control             | [stepper_absolute_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/stepper_absolute_wifi.py)                   | [stepper_absolute_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/stepper_absolute_wifi_aio.py)                   | [stepper_absolute_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/stepper_absolute_ble_aio.py)                   |
+| Stepper Motor (Continuous Motion) | Motor Control             | [stepper_continuous_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/stepper_continuous_wifi.py)               | [stepper_continuous_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/stepper_continuous_wifi_aio.py)               | [stepper_continuous_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/stepper_continuous_ble_aio.py)               |
+| Stepper Motor (Relative Position) | Motor Control             | [stepper_relative_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/stepper_relative_wifi.py)                   | [stepper_relative_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/stepper_relative_wifi_aio.py)                   | [stepper_relative_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/stepper_relative_ble_aio.py)                   |
+| Transport Loopback Diagnostic     | System Diagnostic         | [loop_back_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/loop_back_wifi.py)                                 | [loop_back_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/loop_back_wifi_aio.py)                                 | [loop_back_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/loop_back_ble_aio.py)                                 |
 
 A [User's Guide]() explaining installation and use is available online.
 
