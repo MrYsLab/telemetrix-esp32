@@ -3,13 +3,23 @@
 
 # UNDER CONSTRUCTION
 
-Telemetrix for ESP32 allows you to control and monitor ESP32 devices 
-remotely using Python on your PC. It supports both WI-FI and Bluetooth Low Energy (BLE)
-transports. 
+Would you like to remotely control and monitor an ESP32 device from your PC using either 
+a  WI-FI or Bluetooth Low Energy (BLE) transport? This package provides everything you 
+need to 
+do so.
 
-Input data is reported via callbacks for fast and efficient data notifications.
+It consists of Python client APIs to construct your application and firmware 
+installed on the ESP32 device.
 
-The Python clients support the following features:
+The firmware uploaded to the ESP32 device 
+takes advantage of the [Arduino Core For The ESP32.](https://github.com/espressif/arduino-esp32)
+As a result, the [Arduino IDE](https://www.arduino.cc/en/software)
+is used to compile and upload the firmware to the device.
+
+It is compatible with Windows, Linux, and macOS. It requires the use of Python 3.7 or 
+greater.
+
+The following features are supported:
 
 * Analog Input           
 * Analog Output (PWM)  
@@ -28,11 +38,14 @@ The Python clients support the following features:
 * Available Online Client APIs:
   * [WI-FI Threaded Model](https://htmlpreview.github.io/?https://github.com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_esp32/index.html)
   * [WI-FI And BLE Asyncio Model](https://htmlpreview.github.io/?https://github.com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_aio_esp32/index.html)
+* Callbacks provide immediate notifications for fast and efficient input 
+data change notifications.
 * The Code Is Designed To Be User Extensible
 * Integrated Client/Server Debugging Aids Are Included
 
 
-A full set of examples is included (scroll horizontally to see the full list):
+A complete set of examples is included. 
+Use the horizontal scroll bar at the bottom of the features table to view all the links.
 
 | Feature                           | Feature Type              | WI-FI ExampleS                                                                                                                               | WI-FI Asyncio Examples                                                                                                                                   | BLE Asyncio Examples                                                                                                                                  |
 |-----------------------------------|---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
