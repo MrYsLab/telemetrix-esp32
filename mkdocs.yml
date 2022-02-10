@@ -1,0 +1,22 @@
+site_name: Telemetrix For The ESP32
+nav:
+    - Introduction: index.md
+    - System Requiements:
+        - Python 3: python3.md
+        - Arduino IDE: arduino_ide.md
+    - Installing The Client Software: install_telemetrix.md
+    - Installing The Server Software: server.md
+    - Usage:
+        - The APIs And The Examples: api.md
+        - Specifying Pin Modes And Pin Numbers: pins.md
+        - Understanding Callbacks: callback.md
+    - Reporting Issues: about.md
+    - License: license.md
+
+markdown_extensions:
+    - toc:
+        permalink: "#"
+# theme: windmill
+
+theme:
+  name: 'material'
