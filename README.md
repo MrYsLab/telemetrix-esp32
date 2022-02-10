@@ -68,7 +68,7 @@ Use the horizontal scroll bar at the bottom of the features table to view all th
 | Stepper Motor (Relative Position) | Motor Control             | [stepper_relative_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/stepper_relative_wifi.py)                   | [stepper_relative_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/stepper_relative_wifi_aio.py)                   | [stepper_relative_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/stepper_relative_ble_aio.py)                   |
 | Transport Loopback Diagnostic     | System Diagnostic         | [loop_back_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/loop_back_wifi.py)                                 | [loop_back_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/loop_back_wifi_aio.py)                                 | [loop_back_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/loop_back_ble_aio.py)                                 |
 
-A [User's Guide]() explaining installation and use is available online.
+A [User's Guide](https://mryslab.github.io/telemetrix-esp32/) explaining installation and use is available online.
 
 
 
