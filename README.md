@@ -1,8 +1,6 @@
 
 # Telemetrix For The ESP32
 
-# UNDER CONSTRUCTION
-
 Would you like to remotely control and monitor an ESP32 device from your PC using either 
 a  WI-FI or Bluetooth Low Energy (BLE) transport? This package provides everything you 
 need to 

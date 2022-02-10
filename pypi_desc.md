@@ -1,6 +1,3 @@
-
-# Telemetrix For The ESP32
-
 # Telemetrix For The ESP32
 
 Would you like to remotely control and monitor an ESP32 device from your PC using either 
