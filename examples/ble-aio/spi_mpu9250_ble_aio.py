@@ -114,7 +114,7 @@ async def read_data_from_device(register, number_of_bytes, callback):
 
     # deactivate chip select
     await board.spi_cs_control(CS_PIN, 1)
-    time.sleep(.1)
+    await asyncio.sleep(.1)
 
 
 async def spi_example(the_board):

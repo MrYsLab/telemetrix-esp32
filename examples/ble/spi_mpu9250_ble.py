@@ -25,11 +25,10 @@ the callback functions.
 
 """
 
-import asyncio
 import sys
 import time
 
-from telemetrix_aio_esp32 import telemetrix_aio_esp32
+from telemetrix_esp32 import telemetrix_esp32
 
 # Convenience values for the pins.
 # Note that the CS value is within a list
@@ -43,8 +42,6 @@ from telemetrix_aio_esp32 import telemetrix_aio_esp32
 #  MISO (AD0) = 19
 #  SCK (SCL)   = 18
 
-# IP address assigned to the ESP32
-IP_ADDRESS = '192.168.2.232'
 
 CS = [5]
 CS_PIN = 5
@@ -58,7 +55,7 @@ NUM_BYTES_TO_READ = 6
 """
 
 
-async def the_device_callback(report):
+def the_device_callback(report):
     """
     Verify the device ID
     :param report: [SPI_REPORT, read register, Number of bytes, device_id]
@@ -70,7 +67,7 @@ async def the_device_callback(report):
 
 
 # noinspection GrazieInspection
-async def accel_callback(report):
+def accel_callback(report):
     """
     Print the AX, AY and AZ values.
     :param report: [SPI_REPORT, Register, Number of bytes, AX-msb, AX-lsb
@@ -81,7 +78,7 @@ async def accel_callback(report):
           f"AZ = {int.from_bytes(report[7:9], byteorder='big', signed=True)}  ")
 
 
-async def gyro_callback(report):
+def gyro_callback(report):
     # noinspection GrazieInspection
     """
         Print the GX, GY, and GZ values.
@@ -96,7 +93,7 @@ async def gyro_callback(report):
 
 
 # This is a utility function to read SPI data
-async def read_data_from_device(register, number_of_bytes, callback):
+def read_data_from_device(register, number_of_bytes, callback):
     # noinspection GrazieInspection
     """
     This function reads the number of bytes using the register value.
@@ -110,53 +107,51 @@ async def read_data_from_device(register, number_of_bytes, callback):
     data = register
 
     # activate chip select
-    await board.spi_cs_control(CS_PIN, 0)
+    board.spi_cs_control(CS_PIN, 0)
 
-    await board.spi_read_blocking(data, number_of_bytes, call_back=callback)
+    board.spi_read_blocking(data, number_of_bytes, call_back=callback)
 
     # deactivate chip select
-    await board.spi_cs_control(CS_PIN, 1)
-    await asyncio.sleep(.1)
+    board.spi_cs_control(CS_PIN, 1)
+    time.sleep(.1)
 
 
-async def spi_example(the_board):
+def spi_example(the_board):
 
     # initialize the device
-    await board.set_pin_mode_spi(CS)
+    board.set_pin_mode_spi(CS)
 
     # reset the device
-    await the_board.spi_cs_control(CS_PIN, 0)
-    await the_board.spi_write_blocking([0x6B, 0])
-    await the_board.spi_cs_control(CS_PIN, 1)
+    the_board.spi_cs_control(CS_PIN, 0)
+    the_board.spi_write_blocking([0x6B, 0])
+    the_board.spi_cs_control(CS_PIN, 1)
 
-    await asyncio.sleep(.1)
+    time.sleep(.1)
 
     # get the device ID
-    await read_data_from_device(0x75, 1, the_device_callback)
+    read_data_from_device(0x75, 1, the_device_callback)
 
     while True:
         try:
-            await asyncio.sleep(1)
+            time.sleep(1)
             # get the acceleration values
-            await read_data_from_device(0x3b, 6, accel_callback)
-            await asyncio.sleep(.1)
+            read_data_from_device(0x3b, 6, accel_callback)
+            time.sleep(.1)
 
             # get the gyro values
-            await read_data_from_device(0x43, 6, gyro_callback)
-            await asyncio.sleep(.1)
+            read_data_from_device(0x43, 6, gyro_callback)
+            time.sleep(.1)
         except KeyboardInterrupt:
-            await the_board.shutdown()
+            the_board.shutdown()
             sys.exit(0)
 
-# get the event loop
-loop = asyncio.get_event_loop()
 
 # instantiate telemetrix
-board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_address=IP_ADDRESS)
+board = telemetrix_esp32.TelemetrixEsp32(transport_is_wifi=False)
 
 try:
     # start the main function
-    loop.run_until_complete(spi_example(board))
+    spi_example(board)
 except KeyboardInterrupt:
-    loop.run_until_complete(board.shutdown())
+    board.shutdown()
     sys.exit(0)

@@ -19,24 +19,20 @@
 """
 
 import sys
-import asyncio
-
-from telemetrix_aio_esp32 import telemetrix_aio_esp32
+import time
+from telemetrix_esp32 import telemetrix_esp32
 
 """
 Setup a pin for output and fade its intensity
 """
 
-# IP address assigned to the ESP32
-IP_ADDRESS = '192.168.2.232'
-
+# some globals
 # make sure to select a PWM pin
-
 DIGITAL_PIN = 2
 CHANNEL = 0
 
 
-async def fade(board, pin):
+def fade(board, pin):
     """
     Perform the PWM fade
 
@@ -45,8 +41,8 @@ async def fade(board, pin):
     """
 
     # Set the DIGITAL_PIN as an output pin
-    await board.set_pin_mode_analog_output(pin)
-    await board.analog_write(CHANNEL, 0)
+    board.set_pin_mode_analog_output(pin)
+    board.analog_write(CHANNEL, 0)
     # When hitting control-c to end the program
     # in this loop, we are likely to get a KeyboardInterrupt
     # exception. Catch the exception and exit gracefully.
@@ -54,28 +50,27 @@ async def fade(board, pin):
     try:
         print('Fading up...')
         for i in range(0, 255, 5):
-            await board.analog_write(CHANNEL, i)
-            await asyncio.sleep(.1)
+            board.analog_write(CHANNEL, i)
+            time.sleep(.006)
         print('Fading down...')
         for i in range(255, -1, -5):
-            await board.analog_write(CHANNEL, i)
-            await asyncio.sleep(.1)
-        await board.analog_write(CHANNEL, 0)
-        await board.detach_pin_to_analog_channel(DIGITAL_PIN, CHANNEL)
+            board.analog_write(CHANNEL, i)
+            time.sleep(.006)
+        board.analog_write(CHANNEL, 0)
+        board.detach_pin_to_analog_channel(DIGITAL_PIN, CHANNEL)
     except KeyboardInterrupt:
-        await board.shutdown()
+        board.shutdown()
         sys.exit(0)
 
-# get the event loop
-loop = asyncio.get_event_loop()
 
 # instantiate telemetrix
-the_board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_address=IP_ADDRESS)
+the_board = telemetrix_esp32.TelemetrixEsp32(transport_is_wifi=False)
 
 try:
     # start the main function
-    loop.run_until_complete(fade(the_board, DIGITAL_PIN))
-    loop.run_until_complete(the_board.shutdown())
+    fade(the_board, DIGITAL_PIN)
+    the_board.shutdown()
+    sys.exit(0)
 except KeyboardInterrupt:
-    loop.run_until_complete(the_board.shutdown())
+    the_board.shutdown()
     sys.exit(0)

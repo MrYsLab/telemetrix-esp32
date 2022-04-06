@@ -15,11 +15,10 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
-import asyncio
 import sys
 import time
 
-from telemetrix_aio_esp32 import telemetrix_aio_esp32
+from telemetrix_esp32 import telemetrix_esp32
 
 """
 This program monitors a DHT 11 humidity/temperature sensor
@@ -47,7 +46,7 @@ DHT_PIN = 13  # GPIO pin
 
 # A callback function to display the distance
 # noinspection GrazieInspection
-async def the_callback(data):
+def the_callback(data):
     # noinspection GrazieInspection
     """
         The callback function to display the change in distance
@@ -71,7 +70,7 @@ async def the_callback(data):
               f' {data[4]} Time: {date}')
 
 
-async def dht(my_board, pin):
+def dht(my_board, pin):
     # noinspection GrazieInspection
     """
         Set the pin mode for a DHT device. Results will appear via the
@@ -84,26 +83,23 @@ async def dht(my_board, pin):
         """
 
     # set the pin mode for the DHT device
-    await my_board.set_pin_mode_dht(pin, the_callback)
+    my_board.set_pin_mode_dht(pin, the_callback)
 
     # just sit in a loop waiting for the reports to come in
     while True:
         try:
-            await asyncio.sleep(.001)
+            time.sleep(.001)
         except KeyboardInterrupt:
-            await my_board.shutdown()
+            my_board.shutdown()
             sys.exit(0)
 
 
-# get the event loop
-loop = asyncio.get_event_loop()
-
 # instantiate telemetrix
-board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_is_wifi=False)
+board = telemetrix_esp32.TelemetrixEsp32(transport_is_wifi=False)
 try:
-    loop.run_until_complete(dht(board, DHT_PIN))
-    loop.run_until_complete(board.shutdown())
+    dht(board, DHT_PIN)
+    board.shutdown()
     sys.exit(0)
 except KeyboardInterrupt:
-    loop.run_until_complete(board.shutdown())
+    board.shutdown()
     sys.exit(0)
