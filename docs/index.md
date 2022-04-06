@@ -18,11 +18,8 @@ consists of ESP32 resident servers uploaded to an
 ESP32 
 device.
 
-There are two WI-FI APIs, one implemented using threading and the other using asyncio.
-Both WI_FI APIs communicate with a common WI-FI server resident on the ESP-32.
-
-For BLE, the client is implemented with asyncio. A threaded API is not supported for BLE 
-due to the limitations of the current Python BLE support libraries.
+For WI-FI and BLE there are two APIs, one implemented using threading and the other 
+using asyncio.
 
 ## Features
 All three APIs share a common set of features:
@@ -48,7 +45,8 @@ All three APIs share a common set of features:
 
 ## API Documentation
 Online API documentation is available for the
-[WI-FI Threaded Model](https://htmlpreview.github.io/?https://github.com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_esp32/index.html)
+[WI-FI And BLE Threaded Model](https://htmlpreview.github.io/?https://github.
+com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_esp32/index.html)
 API and a separate API for the [WI-FI And BLE Asyncio Model](https://htmlpreview.github.io?https://github.com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_aio_esp32/index.html).
 
 ## Examples
@@ -87,5 +85,5 @@ bottom of the table to see the examples' links.
 
 Copyright (C) 2022 Alan Yorinks. All Rights Reserved.
 
-**Last updated 07 February 2022 **
+**Last updated 06 April 2022 **
 
