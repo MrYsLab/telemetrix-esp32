@@ -2,11 +2,17 @@ When developing an application, refer to the client API documentation for the av
 methods and their input parameters. 
 
 
-## Online API Documentation For The WI-FI Threaded Client
+## Online API Documentation For The WI-FI And BLE Threaded Client
 
-* The [WI-FI threaded client](https://htmlpreview.github.io/?https://github.com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_esp32/index.html) 
+* The [WI-FI and BLE threaded client](https://htmlpreview.github.io/?https://github.
+  com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_esp32/index.html) 
 
-When working with the threaded client for WI-FI, you must specify the IP Address assigned
+When working with the threaded client, to work with BLE, set the 
+**_transport_is_wifi_** parameter to False. The MAC address is automatically 
+discovered, but if you wish to specify the MAC address explicitly, you may do so by 
+setting the **_transport address_** parameter.
+
+For WI-FI, you must specify the IP Address assigned
 to the ESP32 device. This is accomplished with the **_transport_address parameter_**.
 
 ```angular2html
@@ -20,7 +26,7 @@ to the ESP32 device. This is accomplished with the **_transport_address paramete
 
 When working with the asyncio client, to work with BLE, set the 
 **_transport_is_wifi_** parameter to False. The MAC address is automatically 
-discovered, but if you wish to explicitly specify the MAC address, you may do so by 
+discovered, but if you wish to specify the MAC address explicitly, you may do so by 
 setting the **_transport address_** parameter.
 
 When working with the WI-FI client, you must specify the IP Address assigned to the 
