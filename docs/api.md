@@ -4,6 +4,8 @@ methods and their input parameters.
 
 ## Online API Documentation For The WI-FI And BLE Threaded Client
 
+**NOTE: Windows on the threaded BLE API is not supported**
+
 * The [WI-FI and BLE threaded client](https://htmlpreview.github.io/?https://github.
   com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_esp32/index.html) 
 
