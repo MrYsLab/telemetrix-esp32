@@ -53,6 +53,7 @@ API and a separate API for the [WI-FI And BLE Asyncio Model](https://htmlpreview
 An extensive set of examples is provided for each of the APIs. Links to all the 
 examples are in the table below. You may need to use the horizontal scroll bar at the 
 bottom of the table to see the examples' links.
+
 | Feature                           | Feature Type              | WI-FI Examples                                                                                                                               | WI-FI Asyncio Examples                                                                                                                                   | BLE Examples                                                                                                                              | BLE Asyncio Examples                                                                                                                                  |
 |-----------------------------------|---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Analog Input                      | GPIO                      | [analog_input_wifi.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/analog_input_wifi.py)                           | [analog_input_wifi_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/analog_input_wifi_aio.py)                           | [analog_input_ble.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble/analog_input_ble.py)                           | [analog_input_ble_aio.py](https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/analog_input_ble_aio.py)                           |
@@ -83,5 +84,5 @@ bottom of the table to see the examples' links.
 
 Copyright (C) 2022 Alan Yorinks. All Rights Reserved.
 
-**Last updated 06 April 2022 **
+**Last updated 07 April 2022 **
 
