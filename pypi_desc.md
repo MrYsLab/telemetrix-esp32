@@ -17,8 +17,8 @@ is used to compile and upload the firmware to the device.
 It is compatible with Windows, Linux, and macOS. It requires the use of Python 3.7 or 
 greater.
 
-NOTE: The threaded BLE version is not Windows compatible, however the asyncio version 
-is compatible.
+**NOTE: The threaded BLE version is not Windows compatible, however the asyncio version 
+is compatible.**
 
 The following features are supported:
 
@@ -37,7 +37,8 @@ The following features are supported:
 * Stepper Motor Control (AccelStepper) 
 * Both WI-FI and BLE Transports Supported
 * Available Online Client APIs:
-  * [WI-FI Threaded Model](https://htmlpreview.github.io/?https://github.com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_esp32/index.html)
+  * [WI-FI And BLE Threaded Model](https://htmlpreview.github.io/?https://github.
+    com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_esp32/index.html)
   * [WI-FI And BLE Asyncio Model](https://htmlpreview.github.io/?https://github.com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_aio_esp32/index.html)
 * Callbacks provide immediate notifications for fast and efficient input 
 data change notifications.
