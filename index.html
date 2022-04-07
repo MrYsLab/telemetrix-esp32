@@ -9,7 +9,7 @@
       
       
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.9">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.2.8">
     
     
       
@@ -17,7 +17,7 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.2b4465f4.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.644de097.min.css">
       
         
         <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
@@ -28,8 +28,9 @@
     
       
         
+        
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
         <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
@@ -497,13 +498,14 @@
               
                 
 
+
 <div style="text-align:center;color:#990033; font-family:times, serif;font-size:2.5em">
 <i>Remotely Monitor And Control An ESP32 With</i></div>
 
 <div style="text-align:center;color:#990033; font-family:times, serif;font-size:3.0em"><i>Telemetrix-ESP32</i></div>
 
-<p><img alt="" src="images/cover.png" /></p>
-<p><br></p>
+<p><img alt="" src="images/cover.png" />
+<br></p>
 <h1 id="_1"><a class="headerlink" href="#_1" title="Permanent link">#</a></h1>
 <p>The <strong><em>telemetrix-esp32</em></strong> project allows you to 
 access ESP32 devices over WI-FI or BLE using Python scripts.</p>
@@ -511,10 +513,9 @@ access ESP32 devices over WI-FI or BLE using Python scripts.</p>
 consists of ESP32 resident servers uploaded to an 
 ESP32 
 device.</p>
-<p>There are two WI-FI APIs, one implemented using threading and the other using asyncio.
-Both WI_FI APIs communicate with a common WI-FI server resident on the ESP-32.</p>
-<p>For BLE, the client is implemented with asyncio. A threaded API is not supported for BLE 
-due to the limitations of the current Python BLE support libraries.</p>
+<p>For WI-FI and BLE, there are two APIs, one implemented using threading and the other 
+using asyncio. </p>
+<p><strong>NOTE: The threaded BLE API is not Windows compatible. However, the asyncio API is.</strong></p>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">#</a></h2>
 <p>All three APIs share a common set of features:</p>
 <ul>
@@ -539,7 +540,8 @@ due to the limitations of the current Python BLE support libraries.</p>
 </ul>
 <h2 id="api-documentation">API Documentation<a class="headerlink" href="#api-documentation" title="Permanent link">#</a></h2>
 <p>Online API documentation is available for the
-<a href="https://htmlpreview.github.io/?https://github.com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_esp32/index.html">WI-FI Threaded Model</a>
+<a href="https://htmlpreview.github.io/?https://github.
+com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_esp32/index.html">WI-FI And BLE Threaded Model</a>
 API and a separate API for the <a href="https://htmlpreview.github.io?https://github.com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_aio_esp32/index.html">WI-FI And BLE Asyncio Model</a>.</p>
 <h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h2>
 <p>An extensive set of examples is provided for each of the APIs. Links to all the 
@@ -552,6 +554,7 @@ bottom of the table to see the examples' links.</p>
 <th>Feature Type</th>
 <th>WI-FI Examples</th>
 <th>WI-FI Asyncio Examples</th>
+<th>BLE Examples</th>
 <th>BLE Asyncio Examples</th>
 </tr>
 </thead>
@@ -561,6 +564,7 @@ bottom of the table to see the examples' links.</p>
 <td>GPIO</td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/analog_input_wifi.py">analog_input_wifi.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/analog_input_wifi_aio.py">analog_input_wifi_aio.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble/analog_input_ble.py">analog_input_ble.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/analog_input_ble_aio.py">analog_input_ble_aio.py</a></td>
 </tr>
 <tr>
@@ -568,6 +572,7 @@ bottom of the table to see the examples' links.</p>
 <td>GPIO</td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/fade_wifi.py">fade_wifi.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/fade_wifi_aio.py">fade_wifi_aio.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/fade_ble.py">fade_ble.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/fade_ble_aio.py">fade_ble_aio.py</a></td>
 </tr>
 <tr>
@@ -575,34 +580,39 @@ bottom of the table to see the examples' links.</p>
 <td>GPIO</td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/dac_wifi.py">dac_wifi.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/dac_wifi_aio.py">dac_wifi_aio.py</a></td>
-<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/dac_ble.py">dac_ble_aio.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/dac_ble.py">dac_ble.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/dac_ble_aio.py">dac_ble_aio.py</a></td>
 </tr>
 <tr>
 <td>Digital Input</td>
 <td>GPIO</td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/digital_input_wifi.py">digital_input_wifi.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/digital_input_wifi_aio.py">digital_input_wifi_aio.py</a></td>
-<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/digital_input_ble.py">digital_input_ble_aio.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/digital_input_ble.py">digital_input_ble.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/digital_input_ble_aio.py">digital_input_ble_aio.py</a></td>
 </tr>
 <tr>
 <td>Digital Input Pull Down</td>
 <td>GPIO</td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/digital_input_pulldown_wifi.py">digital_input_pulldown_wifi.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/digital_input_pulldown_wifi_aio.py">digital_input_pulldown_wifi_aio.py</a></td>
-<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/digital_input_pulldown_ble.py">digital_input_pulldown_ble_aio.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/digital_input_pulldown_ble.py">digital_input_pulldown_ble.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/digital_input_pulldown_ble_aio.py">digital_input_pulldown_ble_aio.py</a></td>
 </tr>
 <tr>
 <td>Digital Input Pull Up</td>
 <td>GPIO</td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/digital_input_pullup_wifi.py">digital_input_pullup_wifi.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/digital_input_pullup_wifi_aio.py">digital_input_pullup_wifi_aio.py</a></td>
-<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/digital_input_pullup_ble.py">digital_input_pullup_ble_aio.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/digital_input_pullup_ble.py">digital_input_pullup_ble.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/digital_input_pullup_ble_aio.py">digital_input_pullup_ble_aio.py</a></td>
 </tr>
 <tr>
 <td>Digital Output</td>
 <td>GPIO</td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/blink_wifi.py">blink_wifi.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/blink_wifi_aio.py">blink_wifi_aio.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/blink_ble.py">blink_ble.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/blink_ble_aio.py">blink_ble_aio.py</a></td>
 </tr>
 <tr>
@@ -610,6 +620,7 @@ bottom of the table to see the examples' links.</p>
 <td>GPIO</td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/touch_input_wifi.py">touch_wifi.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/touch_input_wifi_aio.py">touch_wifi_aio.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/touch_input_ble.py">touch_ble.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/touch_input_ble_aio.py">touch_ble_aio.py</a></td>
 </tr>
 <tr>
@@ -617,6 +628,7 @@ bottom of the table to see the examples' links.</p>
 <td>Device Communications Bus</td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/i2c_adxl345_accelerometer_wifi.py">i2c_adxl345_accelerometer_wifi.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/i2c_adxl345_accelerometer_wifi_aio.py">i2c_adxl345_accelerometer_wifi_aio.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/i2c_adxl345_accelerometer_ble.py">i2c_adxl345_accelerometer_ble.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/i2c_adxl345_accelerometer_ble_aio.py">i2c_adxl345_accelerometer_ble_aio.py</a></td>
 </tr>
 <tr>
@@ -624,6 +636,7 @@ bottom of the table to see the examples' links.</p>
 <td>Device Communications Bus</td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/onewire_ds18x20_wifi.py">onewire_ds18x20_wifi.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/onewire_ds18x20_wifi_aio.py">onewire_ds18x20_wifi_aio.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/onewire_ds18x20_ble.py">onewire_ds18x20_ble.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/onewire_ds18x20_ble_aio.py">onewire_ds18x20_ble_aio.py</a></td>
 </tr>
 <tr>
@@ -631,6 +644,7 @@ bottom of the table to see the examples' links.</p>
 <td>Device Communications Bus</td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/spi_mpu9250_wifi.py">spi_mpu9250_wifi.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/spi_mpu9250_wifi_aio.py">spi_mpu9250_wifi_aio.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/spi_mpu9250_ble.py">spi_mpu9250_ble.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/spi_mpu9250_ble_aio.py">spi_mpu9250_ble_aio.py</a></td>
 </tr>
 <tr>
@@ -638,6 +652,7 @@ bottom of the table to see the examples' links.</p>
 <td>Sensor Device Support</td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/dht_wifi.py">dht_wifi.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/dht_wifi_aio.py">dht_wifi_aio.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/dht_ble.py">dht_ble.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/dht_ble_aio.py">dht_ble_aio.py</a></td>
 </tr>
 <tr>
@@ -645,6 +660,7 @@ bottom of the table to see the examples' links.</p>
 <td>Sensor Device Support</td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/hc-sr04_distance_sensor_wifi.py">hc-sr04_distance_sensor_wifi.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/hc-sr04_distance_sensor_wifi_aio.py">hc-sr04_distance_sensor_wifi_aio.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/hc-sr04_distance_sensor_ble.py">hc-sr04_distance_sensor_ble.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/hc-sr04_distance_sensor_ble_aio.py">hc-sr04_distance_sensor_ble_aio.py</a></td>
 </tr>
 <tr>
@@ -652,6 +668,7 @@ bottom of the table to see the examples' links.</p>
 <td>Motor Control</td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/servo_wifi.py">servo_wifi.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/servo_wifi_aio.py">servo_wifi_aio.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/servo_ble.py">servo_ble.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/servo_ble_aio.py">servo_ble_aio.py</a></td>
 </tr>
 <tr>
@@ -659,6 +676,7 @@ bottom of the table to see the examples' links.</p>
 <td>Motor Control</td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/stepper_absolute_wifi.py">stepper_absolute_wifi.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/stepper_absolute_wifi_aio.py">stepper_absolute_wifi_aio.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/stepper_absolute_ble.py">stepper_absolute_ble.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/stepper_absolute_ble_aio.py">stepper_absolute_ble_aio.py</a></td>
 </tr>
 <tr>
@@ -666,6 +684,7 @@ bottom of the table to see the examples' links.</p>
 <td>Motor Control</td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/stepper_continuous_wifi.py">stepper_continuous_wifi.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/stepper_continuous_wifi_aio.py">stepper_continuous_wifi_aio.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/stepper_continuous_ble.py">stepper_continuous_ble.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/stepper_continuous_ble_aio.py">stepper_continuous_ble_aio.py</a></td>
 </tr>
 <tr>
@@ -673,6 +692,7 @@ bottom of the table to see the examples' links.</p>
 <td>Motor Control</td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/stepper_relative_wifi.py">stepper_relative_wifi.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/stepper_relative_wifi_aio.py">stepper_relative_wifi_aio.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/stepper_relative_ble.py">stepper_relative_ble.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/stepper_relative_ble_aio.py">stepper_relative_ble_aio.py</a></td>
 </tr>
 <tr>
@@ -680,6 +700,7 @@ bottom of the table to see the examples' links.</p>
 <td>System Diagnostic</td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi/loop_back_wifi.py">loop_back_wifi.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/wifi-aio/loop_back_wifi_aio.py">loop_back_wifi_aio.py</a></td>
+<td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/loop_back_ble.py">loop_back_ble.py</a></td>
 <td><a href="https://github.com/MrYsLab/telemetrix-esp32/blob/master/examples/ble-aio/loop_back_ble_aio.py">loop_back_ble_aio.py</a></td>
 </tr>
 </tbody>
@@ -687,7 +708,7 @@ bottom of the table to see the examples' links.</p>
 <p><br>
 <br></p>
 <p>Copyright (C) 2022 Alan Yorinks. All Rights Reserved.</p>
-<p><strong>Last updated 07 February 2022 </strong></p>
+<p><strong>Last updated 06 April 2022 </strong></p>
 
               
             </article>
@@ -738,10 +759,10 @@ bottom of the table to see the examples' links.</p>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": ".", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.22074ed6.min.js"}</script>
+    <script id="__config" type="application/json">{"base": ".", "features": [], "search": "assets/javascripts/workers/search.5e67fbfe.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
     
     
-      <script src="assets/javascripts/bundle.960e086b.min.js"></script>
+      <script src="assets/javascripts/bundle.c44cc438.min.js"></script>
       
     
   </body>
