@@ -307,16 +307,32 @@ class TelemetrixEsp32(threading.Thread):
                 warnings.simplefilter("ignore")
                 print('Retrieving BLE Mac Address of Ble Device. Please wait...')
 
+                found = False
+                first_found = None
                 for adv in self. ble.start_scan(ProvideServicesAdvertisement):
+                    if not first_found:
+                        first_found = adv.complete_name
+                    else:
+                        if adv.complete_name == first_found:
+                            raise RuntimeError("Unable to find the server.")
                     if UARTService in adv.services:
-                        if adv.complete_name == 'Telemetrix4ESP32BLE':
-                            print(f'Connecting to {adv.address.string}')
+                        if not self.transport_address:
+                            if adv.complete_name == 'Telemetrix4ESP32BLE':
+                                found = True
+                        elif adv.address.string == self.transport_address:
+                            found = True
+                        if found:
+                            self.ble_connected = True
                             uart_connection = self.ble.connect(adv)
                             self.ble_client = uart_connection[UARTService]
-                            print('Connection successful')
+
+                            print(f'Connection successful: {adv.complete_name} - '
+                                  f'{adv.address.string}')
                             self.ble.stop_scan()
                             time.sleep(.5)
                             break
+                        else:
+                            continue
                 # ble.stop_scan()
 
         # start the library threads
@@ -334,8 +350,13 @@ class TelemetrixEsp32(threading.Thread):
                 self.shutdown()
             raise RuntimeError('Could not retrieve server firmware version')
 
-        print(f'Telemetrix4Esp32WIFI Firmware Version: {self.firmware_version[0]}'
-              f'.{self.firmware_version[1]}.{self.firmware_version[2]}')
+        if self.transport_is_wifi:
+            print(f'Telemetrix4Esp32WIFI Firmware Version: {self.firmware_version[0]}'
+                f'.{self.firmware_version[1]}.{self.firmware_version[2]}')
+
+        else:
+            print(f'Telemetrix4Esp32BLE Firmware Version: {self.firmware_version[0]}'
+                  f'.{self.firmware_version[1]}.{self.firmware_version[2]}')
 
         # enable all reporting by the server
         command = [PrivateConstants.ENABLE_ALL_REPORTS]
@@ -2718,7 +2739,7 @@ class TelemetrixEsp32(threading.Thread):
         # Start this thread only if transport_address is set
 
         while self._is_running() and not self.shutdown_flag:
-            if self.transport_address:
+            if self.transport_is_wifi:
                 try:
                     payload = self.sock.recv(1)
                     self.the_deque.append(ord(payload))
@@ -2728,17 +2749,11 @@ class TelemetrixEsp32(threading.Thread):
                 # payload = bytearray(30)
                 bytes_waiting = self.ble_client.in_waiting
                 if bytes_waiting:
-                    # print(z)
                     data = self.ble_client.read(bytes_waiting)
                     # assure that the packet is of correct length
                     payload = list(data)
 
                     for i in range(0, bytes_waiting):
                         self.the_deque.append(payload[i])
-                    # print(payload)
-                    # if payload:
-                    # self.the_deque.append(ord(payload))
-                    # self.the_deque.append(payload)
-
                 else:
                     time.sleep(.01)

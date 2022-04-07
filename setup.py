@@ -8,7 +8,7 @@ with open('README.md') as f:
 setup(
     name='telemetrix-esp32',
     packages=['telemetrix_aio_esp32', 'telemetrix_esp32_common', 'telemetrix_esp32'],
-    install_requires=['bleak'],
+    install_requires=['bleak', 'adafruit-blinka-bleio', 'adafruit-circuitpython-ble'],
 
     version='1.2',
 

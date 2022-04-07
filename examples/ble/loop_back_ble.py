@@ -43,11 +43,9 @@ def loop_back(my_board, loop_back_data):
     :param loop_back_data: A list of characters to have looped back
     """
     try:
-        print('callback')
-        # time.sleep(1)
+        print(f'Sending {char_list}')
         for data in loop_back_data:
             my_board.loop_back(data, callback=the_callback)
-            print(f'Sending: {data}')
     except KeyboardInterrupt:
         my_board.shutdown()
         sys.exit(0)
