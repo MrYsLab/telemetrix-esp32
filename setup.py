@@ -8,9 +8,10 @@ with open('README.md') as f:
 setup(
     name='telemetrix-esp32',
     packages=['telemetrix_aio_esp32', 'telemetrix_esp32_common', 'telemetrix_esp32'],
-    install_requires=['bleak'],
+    install_requires=['adafruit-blinka-bleio',
+                      'adafruit-circuitpython-ble', 'bleak>=0.14.2'],
 
-    version='1.1',
+    version='1.2',
 
     description="Remotely Control And Monitor ESP32 Devices",
     long_description=long_description,

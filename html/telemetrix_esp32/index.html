@@ -64,9 +64,14 @@ import sys
 import threading
 import time
 from collections import deque
+from adafruit_ble import BLERadio
+from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
+from adafruit_ble.services.nordic import UARTService
 
 # noinspection PyUnresolvedReferences
 from telemetrix_esp32_common.private_constants import PrivateConstants
+
+import warnings
 
 
 class TelemetrixEsp32(threading.Thread):
@@ -83,14 +88,19 @@ class TelemetrixEsp32(threading.Thread):
                  ip_port=31336, autostart=True,
                  shutdown_on_exception=True,
                  restart_on_shutdown=True,
+                 transport_is_wifi=True
                  ):
 
         &#34;&#34;&#34;
         The &#34;constructor&#34; method.
 
-        :param transport_address: WI-FI IP address assigned to the ESP32 board
+        :param transport_address: For WI-FI IP -
+                                        IO address assigned to the ESP32 board
+                                  For BLE - manual specify MAC address or  leave
+                                  as None for autodiscovery
 
-        :param ip_port: Specifies the IP port number
+        :param ip_port: For WI-FI - specifies the IP port number
+                        For BLE - not used
 
         :param autostart: If you wish to call the start method within
                           your application, then set this to False.
@@ -100,6 +110,8 @@ class TelemetrixEsp32(threading.Thread):
                                       receiving a KeyboardInterrupt exception
 
         :param restart_on_shutdown: restart the esp32 processor upon shutdown
+
+        :param transport_is_wifi: Set to True forWI-FI or False for BLE
 
         &#34;&#34;&#34;
 
@@ -113,8 +125,22 @@ class TelemetrixEsp32(threading.Thread):
                 raise RuntimeError(&#34;ERROR: Python 3.7.0 or greater is &#34;
                                    &#34;required for use of this program.&#34;)
 
-        if not transport_address:
-            raise RuntimeError(&#34;An IP address must be specified.&#34;)
+        # save input parameters
+        self.transport_address = transport_address
+        self.ip_port = ip_port
+        self.autostart = autostart
+        self.shutdown_on_exception = shutdown_on_exception
+        self.restart_on_shutdown = restart_on_shutdown,
+        self.transport_is_wifi = transport_is_wifi
+
+        if self.transport_is_wifi:
+            if not self.transport_address:
+                raise RuntimeError(&#34;An IP address must be specified.&#34;)
+
+        else:
+            self.ble = BLERadio()
+            self.uart_connection = None
+            self.ble_client = None
 
         # initialize threading parent
         threading.Thread.__init__(self)
@@ -124,27 +150,15 @@ class TelemetrixEsp32(threading.Thread):
 
         # a thread to process incoming reports
         self.the_reporter_thread = \
-            threading.Thread(target=self._wifi_report_dispatcher)
+            threading.Thread(target=self.report_dispatcher)
         self.the_reporter_thread.daemon = True
 
-        # a thread to handle socket communications
-        self.the_data_receive_thread = threading.Thread(target=self._tcp_receiver)
+        # a thread to handle received communications
+        self.the_data_receive_thread = threading.Thread(target=self._link_receiver)
         self.the_data_receive_thread.daemon = True
 
         # flag to allow the reporter and receive threads to run.
         self.run_event = threading.Event()
-
-        # save input parameters
-
-        self.transport_address = transport_address
-
-        self.ip_port = ip_port
-
-        self.autostart = autostart
-
-        self.shutdown_on_exception = shutdown_on_exception
-
-        self.restart_on_shutdown = restart_on_shutdown
 
         # dictionaries to store the callbacks for each pin
         self.analog_callbacks = {}
@@ -197,6 +211,9 @@ class TelemetrixEsp32(threading.Thread):
 
         # communications socket
         self.sock = None
+
+        # ble connection status
+        self.ble_connected = False
 
         # create a deque to receive incoming data
         self.the_deque = deque()
@@ -319,10 +336,31 @@ class TelemetrixEsp32(threading.Thread):
         Use this method if you wish to start manually.
          &#34;&#34;&#34;
 
-        # establish the TCP/IP socket and connect to the ESP32 board
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.transport_address, self.ip_port))
-        print(f&#39;Successfully connected to: {self.transport_address}:{self.ip_port}&#39;)
+        # WI-FI was selected
+        if self.transport_is_wifi:
+            # establish the TCP/IP socket and connect to the ESP32 board
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.connect((self.transport_address, self.ip_port))
+            print(f&#39;Successfully connected to: {self.transport_address}:{self.ip_port}&#39;)
+        # BLE was selected
+        else:
+            if self.ble_connected:
+                raise RuntimeError(&#39;ble_aio_transport: connect - Already connected&#39;)
+            with warnings.catch_warnings():
+                warnings.simplefilter(&#34;ignore&#34;)
+                print(&#39;Retrieving BLE Mac Address of Ble Device. Please wait...&#39;)
+
+                for adv in self. ble.start_scan(ProvideServicesAdvertisement):
+                    if UARTService in adv.services:
+                        if adv.complete_name == &#39;Telemetrix4ESP32BLE&#39;:
+                            print(f&#39;Connecting to {adv.address.string}&#39;)
+                            uart_connection = self.ble.connect(adv)
+                            self.ble_client = uart_connection[UARTService]
+                            print(&#39;Connection successful&#39;)
+                            self.ble.stop_scan()
+                            time.sleep(.5)
+                            break
+                # ble.stop_scan()
 
         # start the library threads
         self.the_reporter_thread.start()
@@ -2313,7 +2351,7 @@ class TelemetrixEsp32(threading.Thread):
             self.report_dispatch[report](data[2:])
 
     # noinspection PyArgumentList
-    def _wifi_report_dispatcher(self):
+    def report_dispatcher(self):
         &#34;&#34;&#34;
         This is the reporter thread. It continuously pulls data from
         the deque. When a full message is detected, that message is
@@ -2696,7 +2734,13 @@ class TelemetrixEsp32(threading.Thread):
         # print(command)
         send_message = bytes(command)
 
-        self.sock.sendall(send_message)
+        if self.transport_is_wifi:
+            self.sock.sendall(send_message)
+        else:
+            try:
+                self.ble_client.write(send_message)
+            except:
+                pass
 
     def _run_threads(self):
         self.run_event.set()
@@ -2707,7 +2751,7 @@ class TelemetrixEsp32(threading.Thread):
     def _stop_threads(self):
         self.run_event.clear()
 
-    def _tcp_receiver(self):
+    def _link_receiver(self):
         &#34;&#34;&#34;
         Thread to continuously check for incoming data.
         When a byte comes in, place it onto the deque.
@@ -2716,16 +2760,31 @@ class TelemetrixEsp32(threading.Thread):
 
         # Start this thread only if transport_address is set
 
-        if self.transport_address:
-
-            while self._is_running() and not self.shutdown_flag:
+        while self._is_running() and not self.shutdown_flag:
+            if self.transport_address:
                 try:
                     payload = self.sock.recv(1)
                     self.the_deque.append(ord(payload))
                 except Exception:
                     pass
-        else:
-            return</code></pre>
+            else:
+                # payload = bytearray(30)
+                bytes_waiting = self.ble_client.in_waiting
+                if bytes_waiting:
+                    # print(z)
+                    data = self.ble_client.read(bytes_waiting)
+                    # assure that the packet is of correct length
+                    payload = list(data)
+
+                    for i in range(0, bytes_waiting):
+                        self.the_deque.append(payload[i])
+                    # print(payload)
+                    # if payload:
+                    # self.the_deque.append(ord(payload))
+                    # self.the_deque.append(payload)
+
+                else:
+                    time.sleep(.01)</code></pre>
 </details>
 </section>
 <section>
@@ -2739,7 +2798,7 @@ class TelemetrixEsp32(threading.Thread):
 <dl>
 <dt id="telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32"><code class="flex name class">
 <span>class <span class="ident">TelemetrixEsp32</span></span>
-<span>(</span><span>transport_address=None, ip_port=31336, autostart=True, shutdown_on_exception=True, restart_on_shutdown=True)</span>
+<span>(</span><span>transport_address=None, ip_port=31336, autostart=True, shutdown_on_exception=True, restart_on_shutdown=True, transport_is_wifi=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This class exposes and implements the TelemetrixAIO API for the ESP32 using
@@ -2747,14 +2806,20 @@ a WI-FI transport.
 It includes the public API methods as well as
 a set of private methods. </p>
 <p>The "constructor" method.</p>
-<p>:param transport_address: WI-FI IP address assigned to the ESP32 board</p>
-<p>:param ip_port: Specifies the IP port number</p>
+<p>:param transport_address: For WI-FI IP -
+IO address assigned to the ESP32 board
+For BLE - manual specify MAC address or
+leave
+as None for autodiscovery</p>
+<p>:param ip_port: For WI-FI - specifies the IP port number
+For BLE - not used</p>
 <p>:param autostart: If you wish to call the start method within
 your application, then set this to False.</p>
 <p>:param shutdown_on_exception: call shutdown before raising
 a RunTimeError exception, or
 receiving a KeyboardInterrupt exception</p>
-<p>:param restart_on_shutdown: restart the esp32 processor upon shutdown</p></div>
+<p>:param restart_on_shutdown: restart the esp32 processor upon shutdown</p>
+<p>:param transport_is_wifi: Set to True forWI-FI or False for BLE</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2773,14 +2838,19 @@ receiving a KeyboardInterrupt exception</p>
                  ip_port=31336, autostart=True,
                  shutdown_on_exception=True,
                  restart_on_shutdown=True,
+                 transport_is_wifi=True
                  ):
 
         &#34;&#34;&#34;
         The &#34;constructor&#34; method.
 
-        :param transport_address: WI-FI IP address assigned to the ESP32 board
+        :param transport_address: For WI-FI IP -
+                                        IO address assigned to the ESP32 board
+                                  For BLE - manual specify MAC address or  leave
+                                  as None for autodiscovery
 
-        :param ip_port: Specifies the IP port number
+        :param ip_port: For WI-FI - specifies the IP port number
+                        For BLE - not used
 
         :param autostart: If you wish to call the start method within
                           your application, then set this to False.
@@ -2790,6 +2860,8 @@ receiving a KeyboardInterrupt exception</p>
                                       receiving a KeyboardInterrupt exception
 
         :param restart_on_shutdown: restart the esp32 processor upon shutdown
+
+        :param transport_is_wifi: Set to True forWI-FI or False for BLE
 
         &#34;&#34;&#34;
 
@@ -2803,8 +2875,22 @@ receiving a KeyboardInterrupt exception</p>
                 raise RuntimeError(&#34;ERROR: Python 3.7.0 or greater is &#34;
                                    &#34;required for use of this program.&#34;)
 
-        if not transport_address:
-            raise RuntimeError(&#34;An IP address must be specified.&#34;)
+        # save input parameters
+        self.transport_address = transport_address
+        self.ip_port = ip_port
+        self.autostart = autostart
+        self.shutdown_on_exception = shutdown_on_exception
+        self.restart_on_shutdown = restart_on_shutdown,
+        self.transport_is_wifi = transport_is_wifi
+
+        if self.transport_is_wifi:
+            if not self.transport_address:
+                raise RuntimeError(&#34;An IP address must be specified.&#34;)
+
+        else:
+            self.ble = BLERadio()
+            self.uart_connection = None
+            self.ble_client = None
 
         # initialize threading parent
         threading.Thread.__init__(self)
@@ -2814,27 +2900,15 @@ receiving a KeyboardInterrupt exception</p>
 
         # a thread to process incoming reports
         self.the_reporter_thread = \
-            threading.Thread(target=self._wifi_report_dispatcher)
+            threading.Thread(target=self.report_dispatcher)
         self.the_reporter_thread.daemon = True
 
-        # a thread to handle socket communications
-        self.the_data_receive_thread = threading.Thread(target=self._tcp_receiver)
+        # a thread to handle received communications
+        self.the_data_receive_thread = threading.Thread(target=self._link_receiver)
         self.the_data_receive_thread.daemon = True
 
         # flag to allow the reporter and receive threads to run.
         self.run_event = threading.Event()
-
-        # save input parameters
-
-        self.transport_address = transport_address
-
-        self.ip_port = ip_port
-
-        self.autostart = autostart
-
-        self.shutdown_on_exception = shutdown_on_exception
-
-        self.restart_on_shutdown = restart_on_shutdown
 
         # dictionaries to store the callbacks for each pin
         self.analog_callbacks = {}
@@ -2887,6 +2961,9 @@ receiving a KeyboardInterrupt exception</p>
 
         # communications socket
         self.sock = None
+
+        # ble connection status
+        self.ble_connected = False
 
         # create a deque to receive incoming data
         self.the_deque = deque()
@@ -3009,10 +3086,31 @@ receiving a KeyboardInterrupt exception</p>
         Use this method if you wish to start manually.
          &#34;&#34;&#34;
 
-        # establish the TCP/IP socket and connect to the ESP32 board
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.transport_address, self.ip_port))
-        print(f&#39;Successfully connected to: {self.transport_address}:{self.ip_port}&#39;)
+        # WI-FI was selected
+        if self.transport_is_wifi:
+            # establish the TCP/IP socket and connect to the ESP32 board
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.connect((self.transport_address, self.ip_port))
+            print(f&#39;Successfully connected to: {self.transport_address}:{self.ip_port}&#39;)
+        # BLE was selected
+        else:
+            if self.ble_connected:
+                raise RuntimeError(&#39;ble_aio_transport: connect - Already connected&#39;)
+            with warnings.catch_warnings():
+                warnings.simplefilter(&#34;ignore&#34;)
+                print(&#39;Retrieving BLE Mac Address of Ble Device. Please wait...&#39;)
+
+                for adv in self. ble.start_scan(ProvideServicesAdvertisement):
+                    if UARTService in adv.services:
+                        if adv.complete_name == &#39;Telemetrix4ESP32BLE&#39;:
+                            print(f&#39;Connecting to {adv.address.string}&#39;)
+                            uart_connection = self.ble.connect(adv)
+                            self.ble_client = uart_connection[UARTService]
+                            print(&#39;Connection successful&#39;)
+                            self.ble.stop_scan()
+                            time.sleep(.5)
+                            break
+                # ble.stop_scan()
 
         # start the library threads
         self.the_reporter_thread.start()
@@ -5003,7 +5101,7 @@ receiving a KeyboardInterrupt exception</p>
             self.report_dispatch[report](data[2:])
 
     # noinspection PyArgumentList
-    def _wifi_report_dispatcher(self):
+    def report_dispatcher(self):
         &#34;&#34;&#34;
         This is the reporter thread. It continuously pulls data from
         the deque. When a full message is detected, that message is
@@ -5386,7 +5484,13 @@ receiving a KeyboardInterrupt exception</p>
         # print(command)
         send_message = bytes(command)
 
-        self.sock.sendall(send_message)
+        if self.transport_is_wifi:
+            self.sock.sendall(send_message)
+        else:
+            try:
+                self.ble_client.write(send_message)
+            except:
+                pass
 
     def _run_threads(self):
         self.run_event.set()
@@ -5397,7 +5501,7 @@ receiving a KeyboardInterrupt exception</p>
     def _stop_threads(self):
         self.run_event.clear()
 
-    def _tcp_receiver(self):
+    def _link_receiver(self):
         &#34;&#34;&#34;
         Thread to continuously check for incoming data.
         When a byte comes in, place it onto the deque.
@@ -5406,16 +5510,31 @@ receiving a KeyboardInterrupt exception</p>
 
         # Start this thread only if transport_address is set
 
-        if self.transport_address:
-
-            while self._is_running() and not self.shutdown_flag:
+        while self._is_running() and not self.shutdown_flag:
+            if self.transport_address:
                 try:
                     payload = self.sock.recv(1)
                     self.the_deque.append(ord(payload))
                 except Exception:
                     pass
-        else:
-            return</code></pre>
+            else:
+                # payload = bytearray(30)
+                bytes_waiting = self.ble_client.in_waiting
+                if bytes_waiting:
+                    # print(z)
+                    data = self.ble_client.read(bytes_waiting)
+                    # assure that the packet is of correct length
+                    payload = list(data)
+
+                    for i in range(0, bytes_waiting):
+                        self.the_deque.append(payload[i])
+                    # print(payload)
+                    # if payload:
+                    # self.the_deque.append(ord(payload))
+                    # self.the_deque.append(payload)
+
+                else:
+                    time.sleep(.01)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -6216,6 +6335,62 @@ another read or write.</p>
         if self.shutdown_on_exception:
             self.shutdown()
         raise RuntimeError(&#39;onewire_write: Data must be no larger than 255&#39;)</code></pre>
+</details>
+</dd>
+<dt id="telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32.report_dispatcher"><code class="name flex">
+<span>def <span class="ident">report_dispatcher</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is the reporter thread. It continuously pulls data from
+the deque. When a full message is detected, that message is
+processed.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def report_dispatcher(self):
+    &#34;&#34;&#34;
+    This is the reporter thread. It continuously pulls data from
+    the deque. When a full message is detected, that message is
+    processed.
+    &#34;&#34;&#34;
+    self.run_event.wait()
+
+    while self._is_running() and not self.shutdown_flag:
+        if len(self.the_deque):
+            # response_data will be populated with the received data for the report
+            response_data = []
+            packet_length = self.the_deque.popleft()
+            if packet_length:
+                # get all the data for the report and place it into response_data
+                for i in range(packet_length):
+                    while not len(self.the_deque):
+                        time.sleep(.0001)
+                    data = self.the_deque.popleft()
+                    response_data.append(data)
+
+                # print(f&#39;response_data: {response_data}&#39;)
+
+                # get the report type and look up its dispatch method
+                # here we pop the report type off of response_data
+                report_type = response_data.pop(0)
+                # print(report_type)
+
+                # retrieve the report handler from the dispatch table
+                dispatch_entry = self.report_dispatch.get(report_type)
+
+                # if there is additional data for the report,
+                # it will be contained in response_data
+                # noinspection PyArgumentList
+                dispatch_entry(response_data)
+                continue
+            else:
+                if self.shutdown_on_exception:
+                    self.shutdown()
+                raise RuntimeError(
+                    &#39;A report with a packet length of zero was received.&#39;)
+        # else:
+        #     time.sleep(self.sleep_tune)</code></pre>
 </details>
 </dd>
 <dt id="telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32.servo_detach"><code class="name flex">
@@ -7407,10 +7582,31 @@ parameter in <strong>init</strong> is set to false.</p>
     Use this method if you wish to start manually.
      &#34;&#34;&#34;
 
-    # establish the TCP/IP socket and connect to the ESP32 board
-    self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.sock.connect((self.transport_address, self.ip_port))
-    print(f&#39;Successfully connected to: {self.transport_address}:{self.ip_port}&#39;)
+    # WI-FI was selected
+    if self.transport_is_wifi:
+        # establish the TCP/IP socket and connect to the ESP32 board
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.connect((self.transport_address, self.ip_port))
+        print(f&#39;Successfully connected to: {self.transport_address}:{self.ip_port}&#39;)
+    # BLE was selected
+    else:
+        if self.ble_connected:
+            raise RuntimeError(&#39;ble_aio_transport: connect - Already connected&#39;)
+        with warnings.catch_warnings():
+            warnings.simplefilter(&#34;ignore&#34;)
+            print(&#39;Retrieving BLE Mac Address of Ble Device. Please wait...&#39;)
+
+            for adv in self. ble.start_scan(ProvideServicesAdvertisement):
+                if UARTService in adv.services:
+                    if adv.complete_name == &#39;Telemetrix4ESP32BLE&#39;:
+                        print(f&#39;Connecting to {adv.address.string}&#39;)
+                        uart_connection = self.ble.connect(adv)
+                        self.ble_client = uart_connection[UARTService]
+                        print(&#39;Connection successful&#39;)
+                        self.ble.stop_scan()
+                        time.sleep(.5)
+                        break
+            # ble.stop_scan()
 
     # start the library threads
     self.the_reporter_thread.start()
@@ -8426,6 +8622,7 @@ acceleration parameters.</p>
 <li><code><a title="telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32.onewire_select" href="#telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32.onewire_select">onewire_select</a></code></li>
 <li><code><a title="telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32.onewire_skip" href="#telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32.onewire_skip">onewire_skip</a></code></li>
 <li><code><a title="telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32.onewire_write" href="#telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32.onewire_write">onewire_write</a></code></li>
+<li><code><a title="telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32.report_dispatcher" href="#telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32.report_dispatcher">report_dispatcher</a></code></li>
 <li><code><a title="telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32.servo_detach" href="#telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32.servo_detach">servo_detach</a></code></li>
 <li><code><a title="telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32.servo_write" href="#telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32.servo_write">servo_write</a></code></li>
 <li><code><a title="telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32.set_analog_scan_interval" href="#telemetrix_esp32.telemetrix_esp32.TelemetrixEsp32.set_analog_scan_interval">set_analog_scan_interval</a></code></li>

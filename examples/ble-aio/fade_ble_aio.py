@@ -58,7 +58,7 @@ async def fade(board, pin):
         await board.analog_write(CHANNEL, 0)
         await board.detach_pin_to_analog_channel(DIGITAL_PIN, CHANNEL)
     except KeyboardInterrupt:
-        board.shutdown()
+        await board.shutdown()
         sys.exit(0)
 
 # get the event loop

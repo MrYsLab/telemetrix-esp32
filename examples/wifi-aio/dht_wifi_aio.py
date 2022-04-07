@@ -93,7 +93,7 @@ async def dht(my_board, pin):
         try:
             await asyncio.sleep(.001)
         except KeyboardInterrupt:
-            my_board.shutdown()
+            await my_board.shutdown()
             sys.exit(0)
 
 
