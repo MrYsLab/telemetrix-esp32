@@ -17,7 +17,9 @@ ESP32
 device.
 
 For WI-FI and BLE, there are two APIs, one implemented using threading and the other 
-using asyncio.
+using asyncio. 
+
+**NOTE: The threaded BLE API is not Windows compatible. However, the asyncio API is.**
 
 ## Features
 All three APIs share a common set of features:

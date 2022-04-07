@@ -11,13 +11,8 @@ All commands listed below are entered using a command or terminal window.
 
 ### For Windows
 
-You must first manually install a pre-release version of the pythonnet package. 
-
-```angular2html
-pip install --pre pythonnet
-```
-
-Next, install the client software.
+**IMPORTANT NOTE:**
+**The threaded BLE API is not compatible with Windows. The asyncio API is compatible.**
 
 ```
 pip install telemetrix-esp32
@@ -32,7 +27,7 @@ pip install telemetrix-esp32 --upgrade
 ### Linux And macOS
 
 To install _telemetrix-esp32_ on Linux (including Raspberry Pi) and macOS 
-computers, open a terminal window, and type:
+computers, open a terminal window and type:
 
 ```
 sudo pip3 install telemetrix-esp32
