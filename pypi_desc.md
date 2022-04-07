@@ -17,6 +17,9 @@ is used to compile and upload the firmware to the device.
 It is compatible with Windows, Linux, and macOS. It requires the use of Python 3.7 or 
 greater.
 
+NOTE: The threaded BLE version is not Windows compatible, however the asyncio version 
+is compatible.
+
 The following features are supported:
 
 * Analog Input           
