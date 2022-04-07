@@ -72,6 +72,8 @@ class TelemetrixEsp32(threading.Thread):
 
         """
 
+        if sys.platform == 'win32':
+            raise RuntimeError("This version is not compatible with Windows. Please use the asyncio API.")
         # check to make sure that Python interpreter is version 3.7 or greater
         python_version = sys.version_info
         if python_version[0] >= 3:
