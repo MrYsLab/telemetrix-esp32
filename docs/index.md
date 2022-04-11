@@ -19,7 +19,7 @@ device.
 For WI-FI and BLE, there are two APIs, one implemented using threading and the other 
 using asyncio. 
 
-**NOTE: The threaded BLE API is not compatible with Windows or Raspbian (Raspberry Pi). 
+**NOTE: The threaded BLE API is incompatible with Windows or Raspberry Pi OS. 
 However, the asyncio API is compatible with both.**
 
 ## Features
