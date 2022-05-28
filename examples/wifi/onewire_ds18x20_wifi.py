@@ -123,7 +123,7 @@ class OneWireTemp:
                 for x in range(10):
                     self.board.onewire_read(self.onewire_callback)
 
-                time.sleep(.3)
+                time.sleep(1)
 
                 # the temperature is contained in the first two bytes of the data
                 raw = (self.temperature_data[1] << 8) | self.temperature_data[0]

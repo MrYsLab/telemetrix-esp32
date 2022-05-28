@@ -52,14 +52,14 @@ def adxl345(my_board):
     my_board.i2c_write(83, [49, 8])
     time.sleep(.1)
     my_board.i2c_write(83, [49, 3])
-    time.sleep(.1)
+    time.sleep(.5)
 
     # read_count = 20
     while True:
-        # read 6 bytes from the data register
+        # read 6 bytes from the data registerF
         try:
             my_board.i2c_read(83, 50, 6, the_callback)
-            time.sleep(.3)
+            time.sleep(1.2)
 
         except (KeyboardInterrupt, RuntimeError):
             my_board.shutdown()

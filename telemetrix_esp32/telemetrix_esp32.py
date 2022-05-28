@@ -2365,8 +2365,11 @@ class TelemetrixEsp32(threading.Thread):
                     # if there is additional data for the report,
                     # it will be contained in response_data
                     # noinspection PyArgumentList
-                    dispatch_entry(response_data)
-                    continue
+                    try:
+                        dispatch_entry(response_data)
+                        continue
+                    except TypeError:
+                        continue
                 else:
                     if self.shutdown_on_exception:
                         self.shutdown()

@@ -49,7 +49,9 @@ async def servo(my_board, pin):
     await my_board.servo_write(pin, 180)
     await my_board.servo_detach(pin)
 
-loop = asyncio.get_event_loop()
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
+
 board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_is_wifi=False)
 try:
     loop.run_until_complete(servo(board, SERVO_PIN))

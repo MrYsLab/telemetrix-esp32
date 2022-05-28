@@ -98,7 +98,8 @@ async def dht(my_board, pin):
 
 
 # get the event loop
-loop = asyncio.get_event_loop()
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
 
 # instantiate telemetrix
 board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_address=IP_ADDRESS)

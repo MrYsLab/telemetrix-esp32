@@ -71,7 +71,7 @@ class OneWireTemp:
 
             # find the devices address
             await self.board.onewire_search(self.onewire_callback)
-            await asyncio.sleep(1)
+            await asyncio.sleep(1.8)
 
             if not self.address:
                 print('Did not receive address')
@@ -81,7 +81,7 @@ class OneWireTemp:
             # check crc of the address
             # the callback does the actual compare
             await self.board.onewire_crc8(list(self.address), self.onewire_callback)
-            await asyncio.sleep(.3)
+            await asyncio.sleep(1.8)
 
             # identify and print the chip type based on the address
             chip_type = self.chip_types[self.address[0]]
@@ -107,7 +107,7 @@ class OneWireTemp:
                 await self.board.onewire_write(0x44, 1)
 
                 # allow 1 second for the conversion to complete
-                await asyncio.sleep(1)
+                await asyncio.sleep(1.8)
 
                 # reset
                 await self.board.onewire_reset(callback=self.onewire_callback)
@@ -120,7 +120,7 @@ class OneWireTemp:
                 for x in range(10):
                     await self.board.onewire_read(self.onewire_callback)
 
-                await asyncio.sleep(.3)
+                await asyncio.sleep(1.8)
 
                 # the temperature is contained in the first two bytes of the data
                 raw = (self.temperature_data[1] << 8) | self.temperature_data[0]
@@ -223,7 +223,8 @@ async def onewire_example(the_board, data_pin):
 
 
 # get the event loop
-loop = asyncio.get_event_loop()
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
 
 # instantiate telemetrix
 board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_is_wifi=False)

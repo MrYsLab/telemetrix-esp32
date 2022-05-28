@@ -123,7 +123,7 @@ class OneWireTemp:
                 for x in range(10):
                     await self.board.onewire_read(self.onewire_callback)
 
-                await asyncio.sleep(.3)
+                await asyncio.sleep(1)
 
                 # the temperature is contained in the first two bytes of the data
                 raw = (self.temperature_data[1] << 8) | self.temperature_data[0]
@@ -226,7 +226,8 @@ async def onewire_example(the_board, data_pin):
 
 
 # get the event loop
-loop = asyncio.get_event_loop()
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
 
 # instantiate telemetrix
 board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_address=IP_ADDRESS)

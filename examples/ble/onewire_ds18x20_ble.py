@@ -71,7 +71,7 @@ class OneWireTemp:
 
             # find the devices address
             self.board.onewire_search(self.onewire_callback)
-            time.sleep(1)
+            time.sleep(1.8)
 
             if not self.address:
                 print('Did not receive address')
@@ -81,7 +81,7 @@ class OneWireTemp:
             # check crc of the address
             # the callback does the actual compare
             self.board.onewire_crc8(list(self.address), self.onewire_callback)
-            time.sleep(.3)
+            time.sleep(1.8)
 
             # identify and print the chip type based on the address
             chip_type = self.chip_types[self.address[0]]
@@ -107,7 +107,7 @@ class OneWireTemp:
                 self.board.onewire_write(0x44, 1)
 
                 # allow 1 second for the conversion to complete
-                time.sleep(1)
+                time.sleep(1.8)
 
                 # reset
                 self.board.onewire_reset(callback=self.onewire_callback)
@@ -120,7 +120,7 @@ class OneWireTemp:
                 for x in range(10):
                     self.board.onewire_read(self.onewire_callback)
 
-                time.sleep(.3)
+                time.sleep(1.8)
 
                 # the temperature is contained in the first two bytes of the data
                 raw = (self.temperature_data[1] << 8) | self.temperature_data[0]
