@@ -11,7 +11,7 @@ setup(
     install_requires=['adafruit-blinka-bleio',
                       'adafruit-circuitpython-ble', 'bleak>=0.14.2'],
 
-    version='1.2',
+    version='1.3',
 
     description="Remotely Control And Monitor ESP32 Devices",
     long_description=long_description,
