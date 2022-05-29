@@ -11,19 +11,37 @@
 The **_telemetrix-esp32_** project allows you to 
 access ESP32 devices over WI-FI or BLE using Python scripts.
 
-The project consists of client APIs used to create Python applications. It also 
-consists of ESP32 resident servers uploaded to an 
-ESP32 
-device.
+The project consists of two Python client APIs and four Arduino Core servers. 
 
-For WI-FI and BLE, there are two APIs, one implemented using threading and the other 
-using asyncio. 
+You may choose to use a Python API that uses a 
+traditional threaded model (_telemetrix_esp32_) or one that uses a Python asyncio 
+model (_telemetrix_aio_esp32_). Both APIs support WI-FI and BLE. 
 
 **NOTE: The threaded BLE API is incompatible with Windows or Raspberry Pi OS. 
 However, the asyncio API is compatible with both.**
 
+
+For both WI-FI and BLE servers, you may choose between using a traditional super-loop 
+architecture (_Telemetrix4Esp32WIFI or Telemetrix4Esp32BLE_) or one that takes 
+advantage of the 
+FreeRTOS 
+operating system 
+built into 
+the ESP32 device (_Telemetrix4ESsp32WIFI_RTOS or Telemetrix4Esp32BLE_RTOS_).
+
+Functionally,  the super-loop and FreeRTOS versions are identical.
+
+Please refer to this
+[article](https://microcontrollerslab.com/difference-bare-metal-and-rtos-based-embedded-systems/) 
+to understand the difference between a super-loop and RTOS design.
+
+
+
+Once you select an API to use, either telemetrix_esp32 or 
+telemetrix_aio_esp32, you may pair it with any of the servers.
+
 ## Features
-All three APIs share a common set of features:
+Both APIs share a common set of features:
 
 * Analog Input
 * Analog (PWM) Output
@@ -85,5 +103,5 @@ bottom of the table to see the examples' links.
 
 Copyright (C) 2022 Alan Yorinks. All Rights Reserved.
 
-**Last updated 11 April 2022 **
+**Last updated 29 May 2022 **
 
