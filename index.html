@@ -509,16 +509,27 @@
 <h1 id="_1"><a class="headerlink" href="#_1" title="Permanent link">#</a></h1>
 <p>The <strong><em>telemetrix-esp32</em></strong> project allows you to 
 access ESP32 devices over WI-FI or BLE using Python scripts.</p>
-<p>The project consists of client APIs used to create Python applications. It also 
-consists of ESP32 resident servers uploaded to an 
-ESP32 
-device.</p>
-<p>For WI-FI and BLE, there are two APIs, one implemented using threading and the other 
-using asyncio. </p>
+<p>The project consists of two Python client APIs and four Arduino Core servers. </p>
+<p>You may choose to use a Python API that uses a 
+traditional threaded model (<em>telemetrix_esp32</em>) or one that uses a Python asyncio 
+model (<em>telemetrix_aio_esp32</em>). Both APIs support WI-FI and BLE. </p>
 <p><strong>NOTE: The threaded BLE API is incompatible with Windows or Raspberry Pi OS. 
 However, the asyncio API is compatible with both.</strong></p>
+<p>For both WI-FI and BLE servers, you may choose between using a traditional super-loop 
+architecture (<em>Telemetrix4Esp32WIFI or Telemetrix4Esp32BLE</em>) or one that takes 
+advantage of the 
+FreeRTOS 
+operating system 
+built into 
+the ESP32 device (<em>Telemetrix4ESsp32WIFI_RTOS or Telemetrix4Esp32BLE_RTOS</em>).</p>
+<p>Functionally,  the super-loop and FreeRTOS versions are identical.</p>
+<p>Please refer to this
+<a href="https://microcontrollerslab.com/difference-bare-metal-and-rtos-based-embedded-systems/">article</a> 
+to understand the difference between a super-loop and RTOS design.</p>
+<p>Once you select an API to use, either telemetrix_esp32 or 
+telemetrix_aio_esp32, you may pair it with any of the servers.</p>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">#</a></h2>
-<p>All three APIs share a common set of features:</p>
+<p>Both APIs share a common set of features:</p>
 <ul>
 <li>Analog Input</li>
 <li>Analog (PWM) Output</li>
@@ -709,7 +720,7 @@ bottom of the table to see the examples' links.</p>
 <p><br>
 <br></p>
 <p>Copyright (C) 2022 Alan Yorinks. All Rights Reserved.</p>
-<p><strong>Last updated 11 April 2022 </strong></p>
+<p><strong>Last updated 29 May 2022 </strong></p>
 
               
             </article>
