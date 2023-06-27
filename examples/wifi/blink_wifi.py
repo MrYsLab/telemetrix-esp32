@@ -28,9 +28,9 @@ and toggle the pin 5 times.
 """
 
 # IP address assigned to the ESP32
-IP_ADDRESS = '192.168.2.232'
+IP_ADDRESS = '192.168.2.118'
 
-DIGITAL_PIN = 2  # the board LED
+DIGITAL_PIN = 13  # the board LED
 
 # Create a Telemetrix instance.
 board = telemetrix_esp32.TelemetrixEsp32(transport_address=IP_ADDRESS)
