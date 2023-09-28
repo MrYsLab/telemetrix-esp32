@@ -19,6 +19,9 @@ import asyncio
 import struct
 import sys
 import time
+
+import bleak.exc
+
 from telemetrix_aio_esp32.socket_aio_transport import SocketAioTransport
 from telemetrix_aio_esp32.ble_aio_transport import BleAioTransport
 
@@ -271,7 +274,9 @@ class TelemetrixAioEsp32:
             await self.transport.start()
             self.the_task = self.loop.create_task(self._wifi_report_dispatcher())
         else:
-            self.transport = BleAioTransport(receive_callback=self._ble_report_dispatcher)
+            self.transport = BleAioTransport(
+                "Telemetrix4ESP32BLE",
+                self._ble_report_dispatcher)
             await self.transport.connect()
 
         await self._get_firmware_version()
@@ -2196,7 +2201,10 @@ class TelemetrixAioEsp32:
         if self.restart_on_shutdown:
             # await self.ble_transport.disconnect()
             command = [PrivateConstants.RESET]
-            await self._send_command(command)
+            try:
+                await self._send_command(command)
+            except bleak.exc.BleakDBusError:
+                pass
             await asyncio.sleep(.1)
         if self.the_task:
             self.the_task.cancel()
