@@ -36,7 +36,7 @@ class TelemetrixEsp32(threading.Thread):
     This class exposes and implements the TelemetrixAIO API for the ESP32 using
     a WI-FI transport.
     It includes the public API methods as well as
-    a set of private methods. 
+    a set of private methods.
 
     """
 
@@ -108,8 +108,12 @@ class TelemetrixEsp32(threading.Thread):
         # that they stop when the program is closed
 
         # a thread to process incoming reports
-        self.the_reporter_thread = \
-            threading.Thread(target=self.report_dispatcher)
+        if self.transport_is_wifi:
+            self.the_reporter_thread = \
+                threading.Thread(target=self.report_dispatcher)
+        else:
+            self.the_reporter_thread = \
+                threading.Thread(target=self._ble_report_dispatcher)
         self.the_reporter_thread.daemon = True
 
         # a thread to handle received communications
@@ -309,33 +313,21 @@ class TelemetrixEsp32(threading.Thread):
                 warnings.simplefilter("ignore")
                 print('Retrieving BLE Mac Address of Ble Device. Please wait...')
 
-                found = False
-                first_found = None
-                for adv in self. ble.start_scan(ProvideServicesAdvertisement):
-                    if not first_found:
-                        first_found = adv.complete_name
-                    else:
-                        if adv.complete_name == first_found:
-                            raise RuntimeError("Unable to find the server.")
-                    if UARTService in adv.services:
-                        if not self.transport_address:
-                            if adv.complete_name == 'Telemetrix4ESP32BLE':
-                                found = True
-                        elif adv.address.string == self.transport_address:
-                            found = True
-                        if found:
-                            self.ble_connected = True
-                            uart_connection = self.ble.connect(adv)
-                            self.ble_client = uart_connection[UARTService]
+                for entry in self.ble.start_scan():
 
-                            print(f'Connection successful: {adv.complete_name} - '
-                                  f'{adv.address.string}')
-                            self.ble.stop_scan()
-                            time.sleep(.5)
-                            break
-                        else:
-                            continue
-                # ble.stop_scan()
+                    if entry.complete_name == 'Telemetrix4ESP32BLE':
+
+                        self.ble_connected = True
+                        uart_connection = self.ble.connect(entry)
+                        self.ble_client = uart_connection[UARTService]
+
+                        print(f'Connection successful: {entry.complete_name}  MAC '
+                              f'address: '
+                              f'{entry.address.string}')
+                        self.ble.stop_scan()
+                        time.sleep(.5)
+                    else:
+                        continue
 
         # start the library threads
         self.the_reporter_thread.start()
@@ -344,8 +336,10 @@ class TelemetrixEsp32(threading.Thread):
 
         self._get_firmware_version()
 
-        time.sleep(.5)
+        time.sleep(1)
 
+        # !!!!!!!!!!!!!!!!!!!
+        # return
         # retrieve the server's firmware version
         if not self.firmware_version:
             if self.shutdown_on_exception:
@@ -369,12 +363,12 @@ class TelemetrixEsp32(threading.Thread):
         """
         This method retrieves the Telemetrix4Esp32BLE firmware version
 
-        :returns: Firmata firmware version
+        :returns: Telemetrix4ESP32 firmware version
         """
         command = [PrivateConstants.GET_FIRMWARE_VERSION]
         self._send_command(command)
         # provide time for the reply
-        time.sleep(.1)
+        time.sleep(1)
 
     def analog_write(self, channel, value):
         """
@@ -1065,7 +1059,7 @@ class TelemetrixEsp32(threading.Thread):
                 4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
         """
 
-        if type(chip_select_list) != list:
+        if chip_select_list is not list:
             if self.shutdown_on_exception:
                 self.shutdown()
             raise RuntimeError('chip_select_list must be in the form of a list')
