@@ -73,4 +73,7 @@ class BleAioTransport:
 
         :return: None
         """
-        await self.bleak_client.write_gatt_char(UART_RX_CHAR_UUID, data)
+        try:
+            await self.bleak_client.write_gatt_char(UART_RX_CHAR_UUID, data)
+        except (AssertionError, EOFError, bleak.exc.BleakDBusError):
+            pass

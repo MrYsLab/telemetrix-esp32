@@ -278,6 +278,7 @@ class TelemetrixAioEsp32:
                 "Telemetrix4ESP32BLE",
                 self._ble_report_dispatcher)
             await self.transport.connect()
+            await asyncio.sleep(.4)
 
         await self._get_firmware_version()
 
@@ -310,7 +311,7 @@ class TelemetrixAioEsp32:
         """
         This method retrieves the Telemetrix4Esp32BLE firmware version
 
-        :returns: Firmata firmware version
+        :returns: Telemetrix4ESP32 firmware version
         """
         command = [PrivateConstants.GET_FIRMWARE_VERSION]
         await self._send_command(command)
@@ -1429,18 +1430,29 @@ class TelemetrixAioEsp32:
                 await self.shutdown()
             raise RuntimeError('stepper_set_speed: Invalid motor_id.')
 
-        if not 0 < speed <= 1000:
+        if not -1000 <= speed <= 1000:
             if self.shutdown_on_exception:
                 await self.shutdown()
-            raise RuntimeError('stepper_set_speed: Speed range is 0 - '
-                               '1000.')
+            raise RuntimeError('stepper_set_speed: speed range is -1000 to 1000')
 
-        self.stepper_info_list[motor_id]['speed'] = speed
+        if speed < 0:
+            polarity = 1
+        else:
+            polarity = 0
 
-        speed_msb = speed >> 8
-        speed_lsb = speed & 0xff
+        speed = abs(speed)
+        if not self.stepper_info_list[motor_id]['instance']:
+            if self.shutdown_on_exception:
+                await self.shutdown()
+            raise RuntimeError('stepper_move: Invalid motor_id.')
 
-        command = [PrivateConstants.STEPPER_SET_SPEED, motor_id, speed_msb, speed_lsb]
+        position_bytes = list(speed.to_bytes(2, 'big', signed=True))
+
+        command = [PrivateConstants.STEPPER_SET_SPEED, motor_id]
+
+        for value in position_bytes:
+            command.append(value)
+        command.append(polarity)
         await self._send_command(command)
 
     async def stepper_get_speed(self, motor_id):
@@ -2203,9 +2215,9 @@ class TelemetrixAioEsp32:
             command = [PrivateConstants.RESET]
             try:
                 await self._send_command(command)
-            except bleak.exc.BleakDBusError:
+            except (bleak.exc.BleakDBusError, AssertionError):
                 pass
-            await asyncio.sleep(.1)
+            await asyncio.sleep(.5)
         if self.the_task:
             self.the_task.cancel()
 
@@ -2273,11 +2285,13 @@ class TelemetrixAioEsp32:
         :param data: data received over the ble link
 
         """
+        await asyncio.sleep(.3)
         self.the_sender = sender
         report = data[1]
+        # print(f'report data {data}')
 
         # noinspection PyArgumentList
-        await self.report_dispatch[report](data[2:])
+        await self.report_dispatch[report](data[1:])
 
     # noinspection PyArgumentList
     async def _wifi_report_dispatcher(self):
@@ -2345,7 +2359,7 @@ class TelemetrixAioEsp32:
         """
         data = list(data)
         pin = data[0]
-        value = (data[1] << 8) + data[2]
+        value = (data[2] << 1) + data[2]
 
         time_stamp = time.time()
 

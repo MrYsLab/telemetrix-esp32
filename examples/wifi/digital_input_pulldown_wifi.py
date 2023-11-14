@@ -32,7 +32,7 @@ Setup a pin for digital input and monitor its changes
 """
 
 # IP address assigned to the ESP32
-IP_ADDRESS = '192.168.2.232'
+IP_ADDRESS = '192.168.2.215'
 # Set up a pin for analog input and monitor its changes
 DIGITAL_PIN = 23  # GPIO pin number
 

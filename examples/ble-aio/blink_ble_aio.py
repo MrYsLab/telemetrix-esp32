@@ -1,5 +1,5 @@
 """
- Copyright (c) 2022 Alan Yorinks All rights reserved.
+ Copyright (c) 2023 Alan Yorinks All rights reserved.
 
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU AFFERO GENERAL PUBLIC LICENSE
@@ -28,12 +28,13 @@ and toggle the pin. Do this 4 times.
 DIGITAL_PIN = 2  # board LED
 
 
-async def blink(my_board, pin):
+async def blink(pin, my_board):
     """
     This function will to toggle a digital pin.
 
-    :param my_board: a telemetrix instance
     :param pin: pin to be controlled
+
+    :param my_board: telemetrix instance
     """
 
     # set the pin mode
@@ -48,6 +49,7 @@ async def blink(my_board, pin):
         await my_board.digital_write(pin, 0)
         await asyncio.sleep(1)
 
+    await my_board.shutdown()
 
 # get the event loop
 loop = asyncio.new_event_loop()
@@ -58,10 +60,7 @@ board = telemetrix_aio_esp32.TelemetrixAioEsp32(transport_is_wifi=False)
 
 try:
     # start the main function
-    loop.run_until_complete(blink(board, DIGITAL_PIN))
+    loop.run_until_complete(blink(DIGITAL_PIN, board))
     loop.run_until_complete(board.shutdown())
-    sys.exit(0)
-
 except KeyboardInterrupt:
     loop.run_until_complete(board.shutdown())
-    sys.exit(0)

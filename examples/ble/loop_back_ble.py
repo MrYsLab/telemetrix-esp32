@@ -1,5 +1,5 @@
 """
- Copyright (c) 2022 Alan Yorinks All rights reserved.
+ Copyright (c) 2023 Alan Yorinks All rights reserved.
 
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU AFFERO GENERAL PUBLIC LICENSE
@@ -59,7 +59,7 @@ char_list = ['A', 'B', 'Z']
 try:
     # start the main function
     loop_back(board, char_list)
-    time.sleep(.1)
+    time.sleep(2)
     board.shutdown()
     sys.exit(0)
 except KeyboardInterrupt:

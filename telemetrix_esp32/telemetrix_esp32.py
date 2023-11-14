@@ -73,7 +73,8 @@ class TelemetrixEsp32(threading.Thread):
         """
 
         if sys.platform == 'win32':
-            raise RuntimeError("This version is not compatible with Windows. Please use the asyncio API.")
+            raise RuntimeError(
+                "This version is not compatible with Windows. Please use the asyncio API.")
         # check to make sure that Python interpreter is version 3.7 or greater
         python_version = sys.version_info
         if python_version[0] >= 3:
@@ -108,12 +109,12 @@ class TelemetrixEsp32(threading.Thread):
         # that they stop when the program is closed
 
         # a thread to process incoming reports
-        if self.transport_is_wifi:
-            self.the_reporter_thread = \
-                threading.Thread(target=self.report_dispatcher)
-        else:
-            self.the_reporter_thread = \
-                threading.Thread(target=self._ble_report_dispatcher)
+        # if self.transport_is_wifi:
+        self.the_reporter_thread = \
+            threading.Thread(target=self.report_dispatcher)
+        # else:
+        #     self.the_reporter_thread = threading.Thread(
+        #    target=self._ble_report_dispatcher)
         self.the_reporter_thread.daemon = True
 
         # a thread to handle received communications
@@ -335,9 +336,7 @@ class TelemetrixEsp32(threading.Thread):
         self._run_threads()
 
         self._get_firmware_version()
-
         time.sleep(1)
-
         # !!!!!!!!!!!!!!!!!!!
         # return
         # retrieve the server's firmware version
@@ -353,7 +352,6 @@ class TelemetrixEsp32(threading.Thread):
         else:
             print(f'Telemetrix4Esp32BLE Firmware Version: {self.firmware_version[0]}'
                   f'.{self.firmware_version[1]}.{self.firmware_version[2]}')
-
         # enable all reporting by the server
         command = [PrivateConstants.ENABLE_ALL_REPORTS]
 
@@ -2317,12 +2315,57 @@ class TelemetrixEsp32(threading.Thread):
         :param data: data received over the ble link
 
         """
-        self.the_sender = sender
-        if data:
-            report = data[1]
+        while 1:
+            # self.the_sender = sender
 
+            # if data:
+            #     print(data)
+            #     report = data[1]
             # noinspection PyArgumentList
-            self.report_dispatch[report](data[2:])
+            #     self.report_dispatch[report](data[2:])
+            # time.sleep(.1)
+
+            self.run_event.wait()
+
+            while self._is_running() and not self.shutdown_flag:
+                # print('dispatcher')
+                if len(self.the_deque):
+                    # response_data will be populated with the received data for the report
+                    response_data = []
+                    packet_length = self.the_deque.popleft()
+                    # print(f'packet_length {packet_length}')
+                    if packet_length:
+                        # get all the data for the report and place it into response_data
+                        for i in range(packet_length):
+                            while not len(self.the_deque):
+                                time.sleep(.0001)
+                            data = self.the_deque.popleft()
+                            response_data.append(data)
+
+                        print(f'response_data: {response_data}')
+                        # print(f'response_data: {response_data}')
+
+                        # get the report type and look up its dispatch method
+                        # here we pop the report type off of response_data
+                        report_type = response_data.pop(0)
+                        print(f'report_type ={report_type}')
+
+                        # retrieve the report handler from the dispatch table
+                        dispatch_entry = self.report_dispatch.get(report_type)
+
+                        # if there is additional data for the report,
+                        # it will be contained in response_data
+                        # noinspection PyArgumentList
+                        try:
+                            dispatch_entry(response_data)
+                            continue
+                        except TypeError:
+                            continue
+                    else:
+                        if self.shutdown_on_exception:
+                            self.shutdown()
+                        raise RuntimeError(
+                            'A report with a packet length of zero was received.')
 
     # noinspection PyArgumentList
     def report_dispatcher(self):
@@ -2334,24 +2377,28 @@ class TelemetrixEsp32(threading.Thread):
         self.run_event.wait()
 
         while self._is_running() and not self.shutdown_flag:
+            # print(f'the_deque length: {len(self.the_deque)}')
             if len(self.the_deque):
                 # response_data will be populated with the received data for the report
+                # print(f'the_deque length: {len(self.the_deque)}')
+
                 response_data = []
                 packet_length = self.the_deque.popleft()
+                # print(f'popped packet_length = {packet_length}')
                 if packet_length:
+                    # print(f'packet length {packet_length}')
                     # get all the data for the report and place it into response_data
                     for i in range(packet_length):
                         while not len(self.the_deque):
                             time.sleep(.0001)
                         data = self.the_deque.popleft()
                         response_data.append(data)
-
                     # print(f'response_data: {response_data}')
 
                     # get the report type and look up its dispatch method
                     # here we pop the report type off of response_data
                     report_type = response_data.pop(0)
-                    # print(report_type)
+                    # print(f'report_type ={report_type}')
 
                     # retrieve the report handler from the dispatch table
                     dispatch_entry = self.report_dispatch.get(report_type)
@@ -2394,7 +2441,7 @@ class TelemetrixEsp32(threading.Thread):
                      bytes that comprise an integer
         """
         value = (data[1] << 8) + data[2]
-        print(f'DEBUG ID: {data[0]} Value: {value}')
+        # print(f'DEBUG ID: {data[0]} Value: {value}')
 
     def _analog_message(self, data):
         """
@@ -2470,8 +2517,11 @@ class TelemetrixEsp32(threading.Thread):
 
         time_stamp = time.time()
         if self.digital_callbacks[pin]:
-            message = [PrivateConstants.DIGITAL_REPORT, pin, value, time_stamp]
-            self.digital_callbacks[pin](message)
+            try:
+                message = [PrivateConstants.DIGITAL_REPORT, pin, value, time_stamp]
+                self.digital_callbacks[pin](message)
+            except KeyError:
+                print('zzz')
 
     def _servo_unavailable(self, report):
         """
@@ -2581,6 +2631,7 @@ class TelemetrixEsp32(threading.Thread):
         self.onewire_callback(cb_list)
 
     def _firmware_report(self, report):
+        # print(f'firmware report {report}')
         self.firmware_version = report
 
     def _stepper_distance_to_go_report(self, report):
@@ -2728,7 +2779,7 @@ class TelemetrixEsp32(threading.Thread):
     def _stop_threads(self):
         self.run_event.clear()
 
-    def _link_receiver(self):
+    def _link_receiverx(self):
         """
         Thread to continuously check for incoming data.
         When a byte comes in, place it onto the deque.
@@ -2746,13 +2797,83 @@ class TelemetrixEsp32(threading.Thread):
                     pass
             else:
                 # payload = bytearray(30)
-                bytes_waiting = self.ble_client.in_waiting
-                if bytes_waiting:
-                    data = self.ble_client.read(bytes_waiting)
+                frame_length = self.ble_client.in_waiting
+                if frame_length:
+                    print(f'frame_length {frame_length}')
+
+                    data = self.ble_client.read(frame_length)
+
+                    #
                     # assure that the packet is of correct length
                     payload = list(data)
+                    print(f'payload: {payload}')
 
-                    for i in range(0, bytes_waiting):
-                        self.the_deque.append(payload[i])
+                    # parse the frame for reports
+                    while frame_length:
+                        report_length = payload[0]
+                        while frame_length < report_length:
+                            time.sleep(.001)
+
+                        # print(f'frame_length2 {frame_length}')
+
+                        # print(f'report_length {report_length}')
+                        # adjust frame length
+                        # add 1 to report length for the report type byte
+                        frame_length = frame_length - (report_length + 1)
+                        # print(f'frame_length3 {frame_length}')
+
+                        # print(f'frame_length {frame_length}')
+                        # slide off first byte
+                        payload = payload[1::]
+                        print(f'payload: {payload}')
+
+                        # for data in range(report_length):
+                        #     try:
+                        # print(payload[data])
+                        # self.the_deque.append(payload[data])
+                        # except IndexError:
+                        # print('x')
+                        if frame_length:
+                            payload = payload[report_length - 1::]
+                        # print(payload)
+                    print('done')
+
+                    # for i in range(0, frame_length):
+                    #     self.the_deque.append(payload[i])
+                    # print(f'link receiver: {len(self.the_deque)}')
+                    # print('xxx')
+                    # time.sleep(.3)
+
                 else:
                     time.sleep(.01)
+
+    def _link_receiver(self):
+        """
+        Thread to continuously check for incoming data.
+        Retrieve each report individually
+        """
+        self.run_event.wait()
+
+        # Start this thread only if transport_address is set
+
+        while self._is_running() and not self.shutdown_flag:
+            if self.transport_is_wifi:
+                try:
+                    payload = self.sock.recv(1)
+                    self.the_deque.append(ord(payload))
+                except Exception:
+                    pass
+            else:
+                # if data available
+                if self.ble_client.in_waiting:
+                    # report = []
+                    report_length = int.from_bytes(self.ble_client.read(1))
+                    self.the_deque.append(report_length)
+                    # print(f'report length = {report_length}')
+                    for data in range(report_length):
+                        next_byte = int.from_bytes(self.ble_client.read(1))
+                        self.the_deque.append(next_byte)
+                        # print(f'next byte {next_byte}')
+                    continue
+
+

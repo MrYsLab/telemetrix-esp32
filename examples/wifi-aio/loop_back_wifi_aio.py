@@ -25,7 +25,7 @@ the Telemetrix client and Telemetrix server.
 """
 
 # IP address assigned to the ESP32
-IP_ADDRESS = '192.168.2.232'
+IP_ADDRESS = '192.168.2.215'
 
 
 async def the_callback(data):
@@ -50,7 +50,7 @@ async def loop_back(my_board, loop_back_data):
             await my_board.loop_back(data, callback=the_callback)
             print(f'Sending: {data}')
         # leave time for callbacks to arrive
-        await asyncio.sleep(.3)
+        await asyncio.sleep(.5)
     except KeyboardInterrupt:
         await my_board.shutdown()
         sys.exit(0)

@@ -29,7 +29,7 @@ Wait for 5 seconds and then disable the DAC.
 DAC_PIN = 25  # board LED
 
 # IP address assigned to the ESP32
-IP_ADDRESS = '192.168.2.232'
+IP_ADDRESS = '192.168.2.215'
 
 
 def dac(my_board, pin, value):

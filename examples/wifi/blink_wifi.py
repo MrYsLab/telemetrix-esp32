@@ -28,7 +28,7 @@ and toggle the pin 5 times.
 """
 
 # IP address assigned to the ESP32
-IP_ADDRESS = '192.168.2.232'
+IP_ADDRESS = '192.168.2.215'
 
 DIGITAL_PIN = 2  # the board LED
 

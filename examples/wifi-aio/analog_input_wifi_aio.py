@@ -27,7 +27,7 @@ polling. Time stamps are provided in both "cooked" and raw form
 """
 
 # IP address assigned to the ESP32
-IP_ADDRESS = '192.168.2.232'
+IP_ADDRESS = '192.168.2.215'
 
 # Set up a pin for analog input and monitor its changes
 ANALOG_PIN = 36  # gpio pin number
@@ -67,7 +67,8 @@ async def analog_in(my_board, pin):
 
     :param pin: GPIO pin number
     """
-    await my_board.set_pin_mode_analog_input(pin, 150, the_callback)
+    await my_board.set_pin_mode_analog_input(pin_number=pin, callback=the_callback,
+                                             differential=15)
 
     try:
         while True:

@@ -25,7 +25,7 @@ the Telemetrix client and Telemetrix server.
 """
 
 # IP address assigned to the ESP32
-IP_ADDRESS = '192.168.2.232'
+IP_ADDRESS = '192.168.2.215'
 
 
 def the_callback(data):
@@ -50,7 +50,7 @@ def loop_back(my_board, loop_back_data):
             my_board.loop_back(data, callback=the_callback)
             print(f'Sending: {data}')
         # allow time for callbacks to fire
-        time.sleep(.3)
+        time.sleep(1)
     except KeyboardInterrupt:
         my_board.shutdown()
         sys.exit(0)
