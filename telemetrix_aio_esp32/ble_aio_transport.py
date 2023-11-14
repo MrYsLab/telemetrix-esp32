@@ -17,6 +17,7 @@
 
 from bleak import discover
 from bleak import BleakClient
+from bleak import BleakScanner
 import asyncio
 import sys
 
@@ -97,7 +98,7 @@ class BleAioTransport:
         # the server's mac address.
         if not self.ble_mac_address:
             print('Retrieving BLE Mac Address of Ble Device. Please wait...')
-            devices = await discover()
+            devices = await BleakScanner.discover()
             for d in devices:
                 if d.name == 'Telemetrix4ESP32BLE':
                     self.ble_mac_address = d.address
