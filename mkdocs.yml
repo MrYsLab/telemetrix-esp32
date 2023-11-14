@@ -1,4 +1,10 @@
+# yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
+
 site_name: Telemetrix For The ESP32
+repo_url: https://github.com/MrYsLab/telemetrix-esp32
+copyright: > # should remain a link to the original theme
+  Copyright &copy; 2020-2023 Alan Yorinks &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  Last 
+  Modified: November 14, 2023
 nav:
     - Introduction: index.md
     - System Requiements:
@@ -13,10 +19,13 @@ nav:
     - Reporting Issues: about.md
     - License: license.md
 
-markdown_extensions:
-    - toc:
-        permalink: "#"
+# markdown_extensions:
+#     - toc:
+#         permalink: "#"
 # theme: windmill
-
 theme:
   name: 'material'
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.footer

@@ -10,6 +10,3 @@ the latest version for your computer platform.
 View the **Install the Arduino Desktop** section of 
 [Getting Started with Arduino products](https://www.arduino.cc/en/Guide) for detailed
 installation instructions.
-<br>
-<br>
-Copyright (C) 2022 Alan Yorinks. All Rights Reserved.

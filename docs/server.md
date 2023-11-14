@@ -98,8 +98,3 @@ section above to install the sketch.
 The Board LED behaves differently for BLE. It will remain lit until the Python application
 successfully connects to the ESP 32 device. 
 
-
-
-<br>
-<br>
-Copyright (C) 2022 Alan Yorinks. All Rights Reserved.

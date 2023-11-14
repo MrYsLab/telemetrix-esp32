@@ -13,8 +13,3 @@ and server is functional.
 
     :param callback: Looped back character will appear in the callback method
 ```
-
-
-<br>
-<br>
-Copyright (C) 2021 Alan Yorinks. All Rights Reserved.

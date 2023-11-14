@@ -19,10 +19,3 @@ email at the address on my [GitHub](https://github.com/MrYsLab) homepage below t
 avatar on the left-hand side of 
 the page.
 
-
-
-
-<br>
-<br>
-Copyright (C) 2022 Alan Yorinks. All Rights Reserved.
-

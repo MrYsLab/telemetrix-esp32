@@ -42,9 +42,3 @@ sudo pip3 install telemetrix-esp32 --upgrade
 The three client APIs are installed with the pip or pip3 command.
 
 
-
-<br>
-<br>
-
-
-Copyright (C) 2022 Alan Yorinks. All Rights Reserved.

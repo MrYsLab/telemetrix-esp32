@@ -44,8 +44,3 @@ An extensive set of examples is provided as part of the release. Refer to the li
 in the [**_Examples_** table on this page.](../#examples) 
 
 
-<br>
-<br>
-
-
-Copyright (C) 2022 Alan Yorinks. All Rights Reserved.

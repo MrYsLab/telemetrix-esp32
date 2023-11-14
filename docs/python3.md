@@ -97,9 +97,4 @@ Use the [procedure above](#verifying-the-installed-python-version-number) to ver
 installed the correct version of Python for your
 computer.
 
-<br>
-<br>
-
-
-Copyright (C) 2022 Alan Yorinks. All Rights Reserved.
 
