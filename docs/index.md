@@ -11,7 +11,10 @@
 The **_telemetrix-esp32_** project allows you to 
 access ESP32 devices over WI-FI or BLE using Python scripts.
 
-The project consists of two Python client APIs, one  
+The project consists of two Python client APIs. One supports a threaded model for both
+BLE and WIFI, and the other supports a Python asyncio model.
+
+On the server side, there are separate BLE and WIFI versions.
 
 You may choose to use a Python API that uses a 
 traditional threaded model (_telemetrix_esp32_) or one that uses a Python asyncio 
