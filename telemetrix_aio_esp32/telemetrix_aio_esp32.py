@@ -2287,11 +2287,15 @@ class TelemetrixAioEsp32:
         """
         await asyncio.sleep(.3)
         self.the_sender = sender
+        print(f'ble aio data receiver {data}')
         report = data[1]
         # print(f'report data {data}')
 
         # noinspection PyArgumentList
-        await self.report_dispatch[report](data[1:])
+        try:
+            await self.report_dispatch[report](data[1:])
+        except KeyError:
+            print('xxx')
 
     # noinspection PyArgumentList
     async def _wifi_report_dispatcher(self):
@@ -2358,8 +2362,8 @@ class TelemetrixAioEsp32:
 
         """
         data = list(data)
-        pin = data[0]
-        value = (data[2] << 1) + data[2]
+        pin = data[1]
+        value = (data[2] << 1) + data[3]
 
         time_stamp = time.time()
 
