@@ -9,10 +9,6 @@
       
       
       
-        <link rel="prev" href="../api/">
-      
-      
-        <link rel="next" href="../callback/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -20,7 +16,7 @@
     
     
       
-        <title>Specifying Pin Modes And Pin Numbers - Telemetrix For The ESP32</title>
+        <title>Ref - Telemetrix For The ESP32</title>
       
     
     
@@ -64,11 +60,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#pin-modes" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -101,7 +92,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Specifying Pin Modes And Pin Numbers
+              Ref
             
           </span>
         </div>
@@ -352,20 +343,18 @@
       
   
   
-    
-  
   
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
@@ -379,7 +368,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             Usage
@@ -410,27 +399,9 @@
                 
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Specifying Pin Modes And Pin Numbers
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../pins/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -439,65 +410,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#pin-modes" class="md-nav__link">
-    Pin Modes
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#specifying-pin-numbers" class="md-nav__link">
-    Specifying Pin Numbers
-  </a>
-  
-    <nav class="md-nav" aria-label="Specifying Pin Numbers">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#valid-pin-numbers" class="md-nav__link">
-    Valid Pin Numbers
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#spi-pins" class="md-nav__link">
-    SPI Pins
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#i2c-pins" class="md-nav__link">
-    I2C Pins
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -586,55 +498,6 @@
   
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#pin-modes" class="md-nav__link">
-    Pin Modes
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#specifying-pin-numbers" class="md-nav__link">
-    Specifying Pin Numbers
-  </a>
-  
-    <nav class="md-nav" aria-label="Specifying Pin Numbers">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#valid-pin-numbers" class="md-nav__link">
-    Valid Pin Numbers
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#spi-pins" class="md-nav__link">
-    SPI Pins
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#i2c-pins" class="md-nav__link">
-    I2C Pins
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -651,47 +514,9 @@
   
 
 
-  <h1>Specifying Pin Modes And Pin Numbers</h1>
+  <h1>Ref</h1>
 
-<h2 id="pin-modes">Pin Modes</h2>
-<p>Before utilizing a pin, you must set its pin mode. Check the APIs for methods that 
-begin with <em>set_pin_mode</em> in their name for the available modes.</p>
-<h2 id="specifying-pin-numbers">Specifying Pin Numbers</h2>
-<h3 id="valid-pin-numbers">Valid Pin Numbers</h3>
-<p>A subset of the GPIO PINS is available when setting pin modes.
-The valid pins available for a specific pin mode are shown in the API. For example:</p>
-<pre><code class="language-angular2html"> def set_pin_mode_digital_input(self, pin_number, callback)
-
-    Set a pin as a digital input.
-
-    :param pin_number: GPIO pin number.
-
-    Valid pins:
-
-    4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
-
-    :param callback: callback function
-
-    callback returns a data list:
-
-    [report_type, pin_number, pin_value, raw_time_stamp]
-
-    The report_type for digital input pins = 2
-</code></pre>
-<p>The set of valid pins are based on the work of <a href="https://www.youtube.com/watch?v=LY-1DHTxRAk">Andreas Spiess</a></p>
-<p>GPIO pin numbers are used for all pin modes.</p>
-<h3 id="spi-pins">SPI Pins</h3>
-<p>Telemetrix uses the standard SPI pins. Only the chip select pins (cs) need to be 
-specified.</p>
-<pre><code>CS =    5
-MOSI =  23
-MISO =  19
-SCK =   18
-</code></pre>
-<h3 id="i2c-pins">I2C Pins</h3>
-<p>Telemetrix uses the standard I2C pins.
-    (SDA) - 21
-    (SCL) - 22</p>
+<p>::: telemetrix_esp32.telemetrix_esp32</p>
 
 
 
@@ -708,44 +533,6 @@ SCK =   18
       
         <footer class="md-footer">
   
-    
-      
-      <nav class="md-footer__inner md-grid" aria-label="Footer" >
-        
-          
-          <a href="../api/" class="md-footer__link md-footer__link--prev" aria-label="Previous: The APIs And The Examples">
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
-            </div>
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              <div class="md-ellipsis">
-                The APIs And The Examples
-              </div>
-            </div>
-          </a>
-        
-        
-          
-          <a href="../callback/" class="md-footer__link md-footer__link--next" aria-label="Next: Understanding Callbacks">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
-                Understanding Callbacks
-              </div>
-            </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
     
   
   <div class="md-footer-meta md-typeset">
