@@ -115,6 +115,8 @@ class TelemetrixEsp32(threading.Thread):
 
         &#34;&#34;&#34;
 
+        if sys.platform == &#39;win32&#39;:
+            raise RuntimeError(&#34;This version is not compatible with Windows. Please use the asyncio API.&#34;)
         # check to make sure that Python interpreter is version 3.7 or greater
         python_version = sys.version_info
         if python_version[0] &gt;= 3:
@@ -350,16 +352,32 @@ class TelemetrixEsp32(threading.Thread):
                 warnings.simplefilter(&#34;ignore&#34;)
                 print(&#39;Retrieving BLE Mac Address of Ble Device. Please wait...&#39;)
 
+                found = False
+                first_found = None
                 for adv in self. ble.start_scan(ProvideServicesAdvertisement):
+                    if not first_found:
+                        first_found = adv.complete_name
+                    else:
+                        if adv.complete_name == first_found:
+                            raise RuntimeError(&#34;Unable to find the server.&#34;)
                     if UARTService in adv.services:
-                        if adv.complete_name == &#39;Telemetrix4ESP32BLE&#39;:
-                            print(f&#39;Connecting to {adv.address.string}&#39;)
+                        if not self.transport_address:
+                            if adv.complete_name == &#39;Telemetrix4ESP32BLE&#39;:
+                                found = True
+                        elif adv.address.string == self.transport_address:
+                            found = True
+                        if found:
+                            self.ble_connected = True
                             uart_connection = self.ble.connect(adv)
                             self.ble_client = uart_connection[UARTService]
-                            print(&#39;Connection successful&#39;)
+
+                            print(f&#39;Connection successful: {adv.complete_name} - &#39;
+                                  f&#39;{adv.address.string}&#39;)
                             self.ble.stop_scan()
                             time.sleep(.5)
                             break
+                        else:
+                            continue
                 # ble.stop_scan()
 
         # start the library threads
@@ -377,8 +395,13 @@ class TelemetrixEsp32(threading.Thread):
                 self.shutdown()
             raise RuntimeError(&#39;Could not retrieve server firmware version&#39;)
 
-        print(f&#39;Telemetrix4Esp32WIFI Firmware Version: {self.firmware_version[0]}&#39;
-              f&#39;.{self.firmware_version[1]}.{self.firmware_version[2]}&#39;)
+        if self.transport_is_wifi:
+            print(f&#39;Telemetrix4Esp32WIFI Firmware Version: {self.firmware_version[0]}&#39;
+                f&#39;.{self.firmware_version[1]}.{self.firmware_version[2]}&#39;)
+
+        else:
+            print(f&#39;Telemetrix4Esp32BLE Firmware Version: {self.firmware_version[0]}&#39;
+                  f&#39;.{self.firmware_version[1]}.{self.firmware_version[2]}&#39;)
 
         # enable all reporting by the server
         command = [PrivateConstants.ENABLE_ALL_REPORTS]
@@ -2385,8 +2408,11 @@ class TelemetrixEsp32(threading.Thread):
                     # if there is additional data for the report,
                     # it will be contained in response_data
                     # noinspection PyArgumentList
-                    dispatch_entry(response_data)
-                    continue
+                    try:
+                        dispatch_entry(response_data)
+                        continue
+                    except TypeError:
+                        continue
                 else:
                     if self.shutdown_on_exception:
                         self.shutdown()
@@ -2761,7 +2787,7 @@ class TelemetrixEsp32(threading.Thread):
         # Start this thread only if transport_address is set
 
         while self._is_running() and not self.shutdown_flag:
-            if self.transport_address:
+            if self.transport_is_wifi:
                 try:
                     payload = self.sock.recv(1)
                     self.the_deque.append(ord(payload))
@@ -2771,18 +2797,12 @@ class TelemetrixEsp32(threading.Thread):
                 # payload = bytearray(30)
                 bytes_waiting = self.ble_client.in_waiting
                 if bytes_waiting:
-                    # print(z)
                     data = self.ble_client.read(bytes_waiting)
                     # assure that the packet is of correct length
                     payload = list(data)
 
                     for i in range(0, bytes_waiting):
                         self.the_deque.append(payload[i])
-                    # print(payload)
-                    # if payload:
-                    # self.the_deque.append(ord(payload))
-                    # self.the_deque.append(payload)
-
                 else:
                     time.sleep(.01)</code></pre>
 </details>
@@ -2865,6 +2885,8 @@ receiving a KeyboardInterrupt exception</p>
 
         &#34;&#34;&#34;
 
+        if sys.platform == &#39;win32&#39;:
+            raise RuntimeError(&#34;This version is not compatible with Windows. Please use the asyncio API.&#34;)
         # check to make sure that Python interpreter is version 3.7 or greater
         python_version = sys.version_info
         if python_version[0] &gt;= 3:
@@ -3100,16 +3122,32 @@ receiving a KeyboardInterrupt exception</p>
                 warnings.simplefilter(&#34;ignore&#34;)
                 print(&#39;Retrieving BLE Mac Address of Ble Device. Please wait...&#39;)
 
+                found = False
+                first_found = None
                 for adv in self. ble.start_scan(ProvideServicesAdvertisement):
+                    if not first_found:
+                        first_found = adv.complete_name
+                    else:
+                        if adv.complete_name == first_found:
+                            raise RuntimeError(&#34;Unable to find the server.&#34;)
                     if UARTService in adv.services:
-                        if adv.complete_name == &#39;Telemetrix4ESP32BLE&#39;:
-                            print(f&#39;Connecting to {adv.address.string}&#39;)
+                        if not self.transport_address:
+                            if adv.complete_name == &#39;Telemetrix4ESP32BLE&#39;:
+                                found = True
+                        elif adv.address.string == self.transport_address:
+                            found = True
+                        if found:
+                            self.ble_connected = True
                             uart_connection = self.ble.connect(adv)
                             self.ble_client = uart_connection[UARTService]
-                            print(&#39;Connection successful&#39;)
+
+                            print(f&#39;Connection successful: {adv.complete_name} - &#39;
+                                  f&#39;{adv.address.string}&#39;)
                             self.ble.stop_scan()
                             time.sleep(.5)
                             break
+                        else:
+                            continue
                 # ble.stop_scan()
 
         # start the library threads
@@ -3127,8 +3165,13 @@ receiving a KeyboardInterrupt exception</p>
                 self.shutdown()
             raise RuntimeError(&#39;Could not retrieve server firmware version&#39;)
 
-        print(f&#39;Telemetrix4Esp32WIFI Firmware Version: {self.firmware_version[0]}&#39;
-              f&#39;.{self.firmware_version[1]}.{self.firmware_version[2]}&#39;)
+        if self.transport_is_wifi:
+            print(f&#39;Telemetrix4Esp32WIFI Firmware Version: {self.firmware_version[0]}&#39;
+                f&#39;.{self.firmware_version[1]}.{self.firmware_version[2]}&#39;)
+
+        else:
+            print(f&#39;Telemetrix4Esp32BLE Firmware Version: {self.firmware_version[0]}&#39;
+                  f&#39;.{self.firmware_version[1]}.{self.firmware_version[2]}&#39;)
 
         # enable all reporting by the server
         command = [PrivateConstants.ENABLE_ALL_REPORTS]
@@ -5135,8 +5178,11 @@ receiving a KeyboardInterrupt exception</p>
                     # if there is additional data for the report,
                     # it will be contained in response_data
                     # noinspection PyArgumentList
-                    dispatch_entry(response_data)
-                    continue
+                    try:
+                        dispatch_entry(response_data)
+                        continue
+                    except TypeError:
+                        continue
                 else:
                     if self.shutdown_on_exception:
                         self.shutdown()
@@ -5511,7 +5557,7 @@ receiving a KeyboardInterrupt exception</p>
         # Start this thread only if transport_address is set
 
         while self._is_running() and not self.shutdown_flag:
-            if self.transport_address:
+            if self.transport_is_wifi:
                 try:
                     payload = self.sock.recv(1)
                     self.the_deque.append(ord(payload))
@@ -5521,18 +5567,12 @@ receiving a KeyboardInterrupt exception</p>
                 # payload = bytearray(30)
                 bytes_waiting = self.ble_client.in_waiting
                 if bytes_waiting:
-                    # print(z)
                     data = self.ble_client.read(bytes_waiting)
                     # assure that the packet is of correct length
                     payload = list(data)
 
                     for i in range(0, bytes_waiting):
                         self.the_deque.append(payload[i])
-                    # print(payload)
-                    # if payload:
-                    # self.the_deque.append(ord(payload))
-                    # self.the_deque.append(payload)
-
                 else:
                     time.sleep(.01)</code></pre>
 </details>
@@ -6382,8 +6422,11 @@ processed.</p></div>
                 # if there is additional data for the report,
                 # it will be contained in response_data
                 # noinspection PyArgumentList
-                dispatch_entry(response_data)
-                continue
+                try:
+                    dispatch_entry(response_data)
+                    continue
+                except TypeError:
+                    continue
             else:
                 if self.shutdown_on_exception:
                     self.shutdown()
@@ -7596,16 +7639,32 @@ parameter in <strong>init</strong> is set to false.</p>
             warnings.simplefilter(&#34;ignore&#34;)
             print(&#39;Retrieving BLE Mac Address of Ble Device. Please wait...&#39;)
 
+            found = False
+            first_found = None
             for adv in self. ble.start_scan(ProvideServicesAdvertisement):
+                if not first_found:
+                    first_found = adv.complete_name
+                else:
+                    if adv.complete_name == first_found:
+                        raise RuntimeError(&#34;Unable to find the server.&#34;)
                 if UARTService in adv.services:
-                    if adv.complete_name == &#39;Telemetrix4ESP32BLE&#39;:
-                        print(f&#39;Connecting to {adv.address.string}&#39;)
+                    if not self.transport_address:
+                        if adv.complete_name == &#39;Telemetrix4ESP32BLE&#39;:
+                            found = True
+                    elif adv.address.string == self.transport_address:
+                        found = True
+                    if found:
+                        self.ble_connected = True
                         uart_connection = self.ble.connect(adv)
                         self.ble_client = uart_connection[UARTService]
-                        print(&#39;Connection successful&#39;)
+
+                        print(f&#39;Connection successful: {adv.complete_name} - &#39;
+                              f&#39;{adv.address.string}&#39;)
                         self.ble.stop_scan()
                         time.sleep(.5)
                         break
+                    else:
+                        continue
             # ble.stop_scan()
 
     # start the library threads
@@ -7623,8 +7682,13 @@ parameter in <strong>init</strong> is set to false.</p>
             self.shutdown()
         raise RuntimeError(&#39;Could not retrieve server firmware version&#39;)
 
-    print(f&#39;Telemetrix4Esp32WIFI Firmware Version: {self.firmware_version[0]}&#39;
-          f&#39;.{self.firmware_version[1]}.{self.firmware_version[2]}&#39;)
+    if self.transport_is_wifi:
+        print(f&#39;Telemetrix4Esp32WIFI Firmware Version: {self.firmware_version[0]}&#39;
+            f&#39;.{self.firmware_version[1]}.{self.firmware_version[2]}&#39;)
+
+    else:
+        print(f&#39;Telemetrix4Esp32BLE Firmware Version: {self.firmware_version[0]}&#39;
+              f&#39;.{self.firmware_version[1]}.{self.firmware_version[2]}&#39;)
 
     # enable all reporting by the server
     command = [PrivateConstants.ENABLE_ALL_REPORTS]
