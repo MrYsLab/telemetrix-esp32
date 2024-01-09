@@ -381,13 +381,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#important-note" class="md-nav__link">
-    IMPORTANT NOTE
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#add-the-telemetrix4esp32-library-to-the-arduino-ide" class="md-nav__link">
     Add The Telemetrix4Esp32 Library To The Arduino IDE
   </a>
@@ -426,6 +419,13 @@
           <li class="md-nav__item">
   <a href="#ble-sketch-preparation-prior-to-compilation" class="md-nav__link">
     BLE Sketch Preparation Prior To Compilation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-sketch-preparation" class="md-nav__link">
+    Additional Sketch Preparation
   </a>
   
 </li>
@@ -611,13 +611,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#important-note" class="md-nav__link">
-    IMPORTANT NOTE
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#add-the-telemetrix4esp32-library-to-the-arduino-ide" class="md-nav__link">
     Add The Telemetrix4Esp32 Library To The Arduino IDE
   </a>
@@ -660,6 +653,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#additional-sketch-preparation" class="md-nav__link">
+    Additional Sketch Preparation
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -684,10 +684,6 @@
 
 
 <h1 id="installing-the-wi-fi-and-ble-esp32-servers">Installing the WI-FI and BLE ESP32 Servers</h1>
-<h2 id="important-note">IMPORTANT NOTE</h2>
-<p><strong>The current version of the <a href="https://github.com/PaulStoffregen/OneWire">OneWire Arduino library</a> - see <a href="https://github.com/PaulStoffregen/OneWire/issues/112">Issue #112.</a>
-is not compatible with version 2.0.3 of the Espressif arduino-esp32 library.</strong></p>
-<p><strong>Until this issue is resolved, please use version 2.0.2 of the library.</strong></p>
 <h2 id="add-the-telemetrix4esp32-library-to-the-arduino-ide">Add The <a href="https://github.com/MrYsLab/Telemetrix4Esp32">Telemetrix4Esp32 Library</a> To The Arduino IDE</h2>
 <p>Open the Arduino IDE and select Tools/Manage Libraries.</p>
 <p><img alt="" src="../images/manage_libraries.png" /></p>
@@ -713,7 +709,7 @@ library, and you can select either server from the File/Examples menu.</p>
 <h2 id="select-either-the-wi-fi-or-ble-server-sketch-for-compilation">Select Either The WI-FI Or BLE Server Sketch For Compilation</h2>
 <h3 id="wi-fi-sketch-preparation-prior-to-compilation">WI-FI Sketch Preparation Prior To Compilation</h3>
 <p>Your router assigns the ESP32 device an IP address. To determine the device's IP 
-address, you must first modify the sketch to indicate your network name (SSID) 
+address, you must first modify the sketch to indicate your network name (SSID) and
 the password before compiling. Look for "YOUR_NETWORK_SSID" and replace that with the 
 name of your 
 network. Be sure to retain the quotation marks. On the following line, replace 
@@ -730,16 +726,28 @@ the Arduino IDE to compile and upload the sketch to ESP32.</p>
 of the IDE. Set the speed to 115200, then press the reset button or re-power the ESP32.</p>
 <p>The IP address assigned to the ESP32 is displayed.</p>
 <p><img alt="" src="../images/ip_address_2.png" /></p>
-<p>If your ESP32 device has a Board LED, it will remain lit until the connection is 
-successful, and then it extinguishes.</p>
-<p>Note the IP address since you will need to include it when using one of the Python 
-WI-FI APIs.</p>
+<p>If your ESP32 device has a Board LED, it will remain lit until the 
+connection succeeds and then extinguishes.</p>
+<p>Note the IP address since you must include it when using one of the Python WI-FI APIs.</p>
 <h3 id="ble-sketch-preparation-prior-to-compilation">BLE Sketch Preparation Prior To Compilation</h3>
 <p>No modifications to the sketch are necessary for BLE. Follow the 
 <strong><em>Uploading The Sketch</em></strong>
 section above to install the sketch.</p>
 <p>The Board LED behaves differently for BLE. It will remain lit until the Python application
 successfully connects to the ESP 32 device. </p>
+<h3 id="additional-sketch-preparation">Additional Sketch Preparation</h3>
+<p>For boards that do not have a user-programmable board resident LED, comment out
+the following #define.</p>
+<pre><code class="language-angular2html">// If your ESP32 device does not support the standard Arduino BUILTIN_LED
+// Comment out this #define to avoid a compilation error
+#define LED_BUILTIN 1
+</code></pre>
+<p>For ESP-32 S3 boards, comment out the following #define.</p>
+<pre><code class="language-angular2html">// If your ESP32 device does not support a DAC (ESP32-S3)
+// Comment out this #define to avoid a compilation error
+#define DAC_SUPPORTED 1
+</code></pre>
+<p><img alt="" src="../images/server_prep.png" /></p>
 
 
 
@@ -801,7 +809,7 @@ successfully connects to the ESP 32 device. </p>
       <div class="md-copyright">
   
     <div class="md-copyright__highlight">
-      Copyright &copy; 2020-2023 Alan Yorinks &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  Last  Modified: November 14, 2023
+      Copyright &copy; 2020-2024 Alan Yorinks &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  Last  Modified: January 9, 2024
 
     </div>
   
@@ -827,6 +835,8 @@ successfully connects to the ESP 32 device. </p>
     
     
       <script src="../assets/javascripts/bundle.81fa17fe.min.js"></script>
+      
+        <script src="../js/open_in_new_tab.js"></script>
       
     
   </body>

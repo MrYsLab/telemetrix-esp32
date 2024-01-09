@@ -63,7 +63,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#_1" class="md-skip">
+        <a href="#introduction" class="md-skip">
           Skip to content
         </a>
       
@@ -256,6 +256,20 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-does-it-work" class="md-nav__link">
+    How Does It Work?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#callbacks-are-cool" class="md-nav__link">
+    Callbacks Are Cool
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#features" class="md-nav__link">
@@ -575,6 +589,20 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#how-does-it-work" class="md-nav__link">
+    How Does It Work?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#callbacks-are-cool" class="md-nav__link">
+    Callbacks Are Cool
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#features" class="md-nav__link">
     Features
   </a>
@@ -620,19 +648,34 @@
 
 <p><img alt="" src="images/cover.png" />
 <br></p>
-<h1 id="_1"></h1>
-<p>The <strong><em>telemetrix-esp32</em></strong> project allows you to 
-access ESP32 devices over WI-FI or BLE using Python scripts.</p>
-<p>The project consists of two Python client APIs. One supports a threaded model for both
-BLE and WIFI, and the other supports a Python asyncio model.</p>
-<p>On the server side, there are separate BLE and WIFI versions.</p>
-<p>You may choose to use a Python API that uses a 
-traditional threaded model (<em>telemetrix_esp32</em>) or one that uses a Python asyncio 
-model (<em>telemetrix_aio_esp32</em>). Both APIs support WI-FI and BLE. </p>
-<p><strong>NOTE: The threaded BLE API is incompatible with Windows or Raspberry Pi OS. 
-However, the asyncio API is compatible with both.</strong></p>
-<p>Once you select an API to use, either telemetrix_esp32 or 
+<h1 id="introduction">Introduction</h1>
+<p>Have you ever wanted to be able to quickly prototype an ESP32 project 
+using Python from your laptop or PC?
+Or, you need to control and monitor an ESP32 remotely but do not wish to give 
+up the performance of a C++-based ESP32 sketch.
+Would you like to be informed of any GPIO data changes without 
+constantly polling to determine if any changes occurred? Would having a 
+timestamp for each data change be a valuable addition to your project?
+You can enjoy these features with the telemetrix library for the ESP32!</p>
+<h2 id="how-does-it-work">How Does It Work?</h2>
+<p>A Telemetrix application consists of a client written in Python using the 
+Telemetrix API and a server, a fixed ESP32 resident sketch written in C/C++ for the ESP32. 
+For the client, you may choose between a threaded API 
+(<a href="https://htmlpreview.github.io/?https://github.com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_esp32/index.html"><em>telemetrix_esp32</em></a>)
+or, 
+if you wish, an asyncio API 
+(<a href="https://htmlpreview.github.io/?https://github.com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_aio_esp32/index.html"><em>telemetrix_aio_esp32</em></a>).</p>
+<p>Once you select an API, either telemetrix_esp32 or 
 telemetrix_aio_esp32, you may pair it with any of the servers.</p>
+<p>The client and server communicate over WIFI or Bluetooth.</p>
+<p><strong>NOTE: The threaded BLE API is </strong>not<strong> incompatible with Windows or Raspberry Pi OS. 
+However, the asyncio API is compatible with both.</strong></p>
+<h2 id="callbacks-are-cool">Callbacks Are Cool</h2>
+<p>Telemetrix utilizes the concept of a callback function to report the data changes 
+to your application. You register your callback function with 
+Telemetrix when you set the mode of operation for the pin. Once you establish a 
+callback for an input pin, your application is automatically notified of the data change.
+There is no need for polling.</p>
 <h2 id="features">Features</h2>
 <p>Both APIs share a common set of features:</p>
 <ul>
@@ -651,9 +694,9 @@ telemetrix_aio_esp32, you may pair it with any of the servers.</p>
 <li>Support For DHT Temperature/Humidity Sensors</li>
 <li>Servo Motors</li>
 <li>Stepper Motors</li>
-<li>All Data change events are reported asynchronously via user registered callback 
+<li>All Data change events are reported asynchronously via user-registered callback 
   functions and are timestamped. </li>
-<li>Integrated server debugging facilities is included. </li>
+<li>Integrated server debugging facilities are included. </li>
 </ul>
 <h2 id="api-documentation">API Documentation</h2>
 <p>Online API documentation is available for the
@@ -867,7 +910,7 @@ bottom of the table to see the examples' links.</p>
       <div class="md-copyright">
   
     <div class="md-copyright__highlight">
-      Copyright &copy; 2020-2023 Alan Yorinks &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  Last  Modified: November 14, 2023
+      Copyright &copy; 2020-2024 Alan Yorinks &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  Last  Modified: January 9, 2024
 
     </div>
   
@@ -893,6 +936,8 @@ bottom of the table to see the examples' links.</p>
     
     
       <script src="assets/javascripts/bundle.81fa17fe.min.js"></script>
+      
+        <script src="js/open_in_new_tab.js"></script>
       
     
   </body>
