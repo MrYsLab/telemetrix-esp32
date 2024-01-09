@@ -45,10 +45,11 @@ Click the Ok button.
 
 ## Select Either The WI-FI Or BLE Server Sketch For Compilation
 
+
 ### WI-FI Sketch Preparation Prior To Compilation
 
 Your router assigns the ESP32 device an IP address. To determine the device's IP 
-address, you must first modify the sketch to indicate your network name (SSID) 
+address, you must first modify the sketch to indicate your network name (SSID) and
 the password before compiling. Look for "YOUR_NETWORK_SSID" and replace that with the 
 name of your 
 network. Be sure to retain the quotation marks. On the following line, replace 
@@ -78,11 +79,10 @@ The IP address assigned to the ESP32 is displayed.
 
 ![](./images/ip_address_2.png)
 
-If your ESP32 device has a Board LED, it will remain lit until the connection is 
-successful, and then it extinguishes.
+If your ESP32 device has a Board LED, it will remain lit until the 
+connection succeeds and then extinguishes.
 
-Note the IP address since you will need to include it when using one of the Python 
-WI-FI APIs.
+Note the IP address since you must include it when using one of the Python WI-FI APIs.
 
 ### BLE Sketch Preparation Prior To Compilation
 
@@ -93,3 +93,20 @@ section above to install the sketch.
 The Board LED behaves differently for BLE. It will remain lit until the Python application
 successfully connects to the ESP 32 device. 
 
+### Additional Sketch Preparation
+
+For boards that do not have a user-programmable board resident LED, comment out
+the following #define.
+```angular2html
+// If your ESP32 device does not support the standard Arduino BUILTIN_LED
+// Comment out this #define to avoid a compilation error
+#define LED_BUILTIN 1
+```
+
+For ESP-32 S3 boards, comment out the following #define.
+```angular2html
+// If your ESP32 device does not support a DAC (ESP32-S3)
+// Comment out this #define to avoid a compilation error
+#define DAC_SUPPORTED 1
+```
+![](./images/server_prep.png)
