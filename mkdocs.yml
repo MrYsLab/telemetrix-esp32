@@ -3,8 +3,8 @@
 site_name: Telemetrix For The ESP32
 repo_url: https://github.com/MrYsLab/telemetrix-esp32
 copyright: > # should remain a link to the original theme
-  Copyright &copy; 2020-2023 Alan Yorinks &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  Last 
-  Modified: November 14, 2023
+  Copyright &copy; 2020-2024 Alan Yorinks &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  Last 
+  Modified: January 9, 2024
 nav:
     - Introduction: index.md
     - System Requiements:
@@ -29,3 +29,8 @@ theme:
     repo: fontawesome/brands/github
   features:
     - navigation.footer
+
+
+plugins:
+  - search
+  - open-in-new-tab

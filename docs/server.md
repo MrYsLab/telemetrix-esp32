@@ -1,11 +1,6 @@
 
 # Installing the WI-FI and BLE ESP32 Servers
 
-## IMPORTANT NOTE
-**The current version of the [OneWire Arduino library](https://github.com/PaulStoffregen/OneWire) - see [Issue #112.](https://github.com/PaulStoffregen/OneWire/issues/112)
-is not compatible with version 2.0.3 of the Espressif arduino-esp32 library.**
-
-**Until this issue is resolved, please use version 2.0.2 of the library.**
 
 ## Add The [Telemetrix4Esp32 Library](https://github.com/MrYsLab/Telemetrix4Esp32) To The Arduino IDE 
 
