@@ -241,7 +241,7 @@ class TelemetrixAioEsp32:
         self.stepper_info_list = []
         # a list of dictionaries to hold stepper information
         for motor in range(self.max_number_of_steppers):
-            self.stepper_info_list.append(self.stepper_info)
+            self.stepper_info_list.append(self.stepper_info.copy())
 
         print(
             f'TelemetrixAioEsp32 Version: {PrivateConstants.TELEMETRIX_AIO_ESP32_VERSION}')
@@ -1006,7 +1006,7 @@ class TelemetrixAioEsp32:
 
         """
 
-        if type(chip_select_list) != list:
+        if type(chip_select_list) is not list:
             if self.shutdown_on_exception:
                 await self.shutdown()
             raise RuntimeError('chip_select_list must be in the form of a list')

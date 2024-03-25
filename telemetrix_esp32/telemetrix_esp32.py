@@ -274,7 +274,7 @@ class TelemetrixEsp32(threading.Thread):
         self.stepper_info_list = []
         # a list of dictionaries to hold stepper information
         for motor in range(self.max_number_of_steppers):
-            self.stepper_info_list.append(self.stepper_info)
+            self.stepper_info_list.append(self.stepper_info.copy())
 
         # a
         print(
@@ -1065,7 +1065,7 @@ class TelemetrixEsp32(threading.Thread):
                 4, 5, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33
         """
 
-        if type(chip_select_list) != list:
+        if type(chip_select_list) is not list:
             if self.shutdown_on_exception:
                 self.shutdown()
             raise RuntimeError('chip_select_list must be in the form of a list')
