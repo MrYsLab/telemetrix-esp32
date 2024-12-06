@@ -6,8 +6,7 @@ methods and their input parameters.
 
 **NOTE: Windows on the threaded BLE API is not supported**
 
-* The [WI-FI and BLE threaded client](https://htmlpreview.github.io/?https://github.
-  com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_esp32/index.html) 
+* The [WI-FI and BLE threaded client](https://htmlpreview.github.io/?https://github.com/MrYsLab/telemetrix-esp32/blob/master/html/telemetrix_esp32/index.html) 
 
 When working with the threaded client, to work with BLE, set the 
 **_transport_is_wifi_** parameter to False. The MAC address is automatically 
