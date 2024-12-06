@@ -26,7 +26,7 @@ positions.
 """
 
 # IP address assigned to the ESP32
-IP_ADDRESS = '192.168.2.232'
+IP_ADDRESS = '192.168.2.215'
 
 SERVO_PIN = 23
 

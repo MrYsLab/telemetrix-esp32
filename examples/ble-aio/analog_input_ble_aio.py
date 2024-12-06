@@ -22,8 +22,7 @@ import time
 from telemetrix_aio_esp32 import telemetrix_aio_esp32
 
 """
-This file demonstrates analog input using both callbacks and
-polling. Time stamps are provided in both "cooked" and raw form
+This file demonstrates analog inputs
 """
 
 # Set up a pin for analog input and monitor its changes

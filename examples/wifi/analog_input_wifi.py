@@ -21,12 +21,11 @@ import time
 from telemetrix_esp32 import telemetrix_esp32
 
 """
-This file demonstrates analog input using both callbacks and
-polling. Time stamps are provided in both "cooked" and raw form
+This file demonstrates analog input.
 """
 
 # IP address assigned to the ESP32
-IP_ADDRESS = '192.168.2.232'
+IP_ADDRESS = '192.168.2.215'
 
 # Set up a pin for analog input and monitor its changes
 ANALOG_PIN = 36  # gpio pin number

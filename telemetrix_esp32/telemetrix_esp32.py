@@ -1,5 +1,5 @@
 """
- Copyright (c) 2022 Alan Yorinks All rights reserved.
+ Copyright (c) 2022-2024 Alan Yorinks All rights reserved.
 
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU AFFERO GENERAL PUBLIC LICENSE
@@ -311,30 +311,30 @@ class TelemetrixEsp32(threading.Thread):
 
                 found = False
                 first_found = None
-                for adv in self. ble.start_scan(ProvideServicesAdvertisement):
+                # for adv in self. ble.start_scan(ProvideServicesAdvertisement):
+                for adv in self.ble.start_scan(timeout = 60):
                     if not first_found:
                         first_found = adv.complete_name
                     else:
                         if adv.complete_name == first_found:
                             raise RuntimeError("Unable to find the server.")
-                    if UARTService in adv.services:
-                        if not self.transport_address:
-                            if adv.complete_name == 'Telemetrix4ESP32BLE':
-                                found = True
-                        elif adv.address.string == self.transport_address:
+                    if not self.transport_address:
+                        if adv.complete_name == 'Telemetrix4ESP32BLE':
                             found = True
-                        if found:
-                            self.ble_connected = True
-                            uart_connection = self.ble.connect(adv)
-                            self.ble_client = uart_connection[UARTService]
+                    elif adv.address.string == self.transport_address:
+                        found = True
+                    if found:
+                        self.ble_connected = True
+                        uart_connection = self.ble.connect(adv)
+                        self.ble_client = uart_connection[UARTService]
 
-                            print(f'Connection successful: {adv.complete_name} - '
-                                  f'{adv.address.string}')
-                            self.ble.stop_scan()
-                            time.sleep(.5)
-                            break
-                        else:
-                            continue
+                        print(f'Connection successful: {adv.complete_name} - '
+                              f'{adv.address.string}')
+                        self.ble.stop_scan()
+                        time.sleep(.5)
+                        break
+                    else:
+                        continue
                 # ble.stop_scan()
 
         # start the library threads
@@ -376,19 +376,18 @@ class TelemetrixEsp32(threading.Thread):
         # provide time for the reply
         time.sleep(.1)
 
-    def analog_write(self, channel, value):
+    def analog_write(self, pin, value):
         """
         Set the specified channel to the specified value.
 
-        :param channel: The pwm channel number is
-                        established in set_pin_mode_analog_output
+        :param pin: pin to control
 
         :param value: pin value (maximum 16 bits)
 
         """
         value_msb = value >> 8
         value_lsb = value & 0xff
-        command = [PrivateConstants.ANALOG_WRITE, channel, value_msb, value_lsb]
+        command = [PrivateConstants.ANALOG_WRITE, pin, value_msb, value_lsb]
         self._send_command(command)
 
     def digital_write(self, pin, value):
@@ -695,29 +694,21 @@ class TelemetrixEsp32(threading.Thread):
                 self.shutdown()
             raise RuntimeError('attach_pin_to_analog_channel: Invalid GPIO pin number')
 
-    def detach_pin_to_analog_channel(self, pin_number, channel):
+    def detach_analog_pin(self, pin_number):
         """
-        If the pin number is a valid pin and the channel was initialized, detach the specified pin.
+        If the pin number is a valid pin detach it.
 
         This method is provided if you with to manually detach a pin from a pwm
         channel.
 
         :param pin_number: GPIO pin number
 
-        :param channel:  PWM Channel Number (0 -15)
         """
 
         # check to see if the pin is a valid pin number
         if pin_number in self.valid_gpio_output_pins:
-            # check to see if the channel is in range
-            if 0 <= channel < 16:
-                command = [PrivateConstants.ANALOG_OUT_DETACH, pin_number, channel]
-                self._send_command(command)
-            else:
-                if self.shutdown_on_exception:
-                    self.shutdown()
-                raise RuntimeError('detach_pin_to_analog_channel: Invalid channel '
-                                   'number')
+            command = [PrivateConstants.ANALOG_OUT_DETACH, pin_number]
+            self._send_command(command)
         else:
             if self.shutdown_on_exception:
                 self.shutdown()

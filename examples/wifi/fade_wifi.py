@@ -29,7 +29,7 @@ Setup a pin for output and fade its intensity
 
 # some globals
 # IP address assigned to the ESP32
-IP_ADDRESS = '192.168.2.232'
+IP_ADDRESS = '192.168.2.215'
 
 # make sure to select a PWM pin
 DIGITAL_PIN = 2
@@ -46,7 +46,7 @@ def fade(board, pin):
 
     # Set the DIGITAL_PIN as an output pin
     board.set_pin_mode_analog_output(pin)
-    board.analog_write(CHANNEL, 0)
+    board.analog_write(pin, 0)
     # When hitting control-c to end the program
     # in this loop, we are likely to get a KeyboardInterrupt
     # exception. Catch the exception and exit gracefully.
@@ -54,14 +54,14 @@ def fade(board, pin):
     try:
         print('Fading up...')
         for i in range(0, 255, 5):
-            board.analog_write(CHANNEL, i)
+            board.analog_write(pin, i)
             time.sleep(.1)
         print('Fading down...')
         for i in range(255, -1, -5):
-            board.analog_write(CHANNEL, i)
+            board.analog_write(pin, i)
             time.sleep(.1)
-        board.analog_write(CHANNEL, 0)
-        board.detach_pin_to_analog_channel(DIGITAL_PIN, CHANNEL)
+        board.analog_write(pin, 0)
+        board.detach_analog_pin(pin)
     except KeyboardInterrupt:
         board.shutdown()
         sys.exit(0)
