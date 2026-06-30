@@ -103,8 +103,8 @@ class PrivateConstants:
 
     DEBUG_PRINT = 99
 
-    TELEMETRIX_ESP32_VERSION = "2.1.0"
-    TELEMETRIX_AIO_ESP32_VERSION = "2.1.0"
+    TELEMETRIX_ESP32_VERSION = "2.1.1"
+    TELEMETRIX_AIO_ESP32_VERSION = "2.1.1"
 
     # reporting control
     REPORTING_DISABLE_ALL = 0

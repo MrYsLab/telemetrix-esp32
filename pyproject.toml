@@ -7,14 +7,15 @@ find = {}  # Scan the project directory with the default parameters
 
 [project]
 name = "telemetrix-esp32"
-version = "2.1.0"
+version = "2.1.1"
 authors = [
   { name="Alan Yorinks", email="MisterYsLab@gmail.com" },
 ]
 description = "Telemetrix Client For The ESP32"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "AGPL-3.0-or-later"}
+license = "AGPL-3.0-or-later"
+license-files = ["license.txt"]
 
 keywords=['telemetrix', 'ESP32', 'Python']
 classifiers=[
